@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { DashboardStats } from '@/components/dashboard/stats';
 import { MemberContributions } from '@/components/dashboard/member-contributions';
 import { TransactionHistory } from '@/components/dashboard/transaction-history';
@@ -16,7 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Coins, Plus, Settings, LogOut, Loader2, Share2, LayoutDashboard } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Coins, Plus, Settings, LogOut, Loader2, Share2, LayoutDashboard, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,6 +37,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [selectedChamaId, setSelectedChamaId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -46,12 +58,14 @@ export default function DashboardPage() {
   useEffect(() => {
     if (chamas && chamas.length > 0 && !selectedChamaId) {
       setSelectedChamaId(chamas[0].id);
+    } else if (chamas && chamas.length === 0) {
+      setSelectedChamaId(null);
     }
   }, [chamas, selectedChamaId]);
 
   const activeChama = useMemo(() => {
     if (!chamas || !selectedChamaId) return null;
-    return chamas.find(c => c.id === selectedChamaId) || chamas[0];
+    return chamas.find(c => c.id === selectedChamaId) || null;
   }, [chamas, selectedChamaId]);
 
   const handleShareInvite = () => {
@@ -62,6 +76,23 @@ export default function DashboardPage() {
       title: "Invite Link Copied!",
       description: "Send this link to your group members.",
     });
+  };
+
+  const handleDeleteChama = () => {
+    if (!activeChama || !db) return;
+    
+    setIsDeleting(true);
+    const chamaRef = doc(db, 'chamas', activeChama.id);
+    
+    deleteDocumentNonBlocking(chamaRef);
+    
+    toast({
+      title: "Chama Deleted",
+      description: `${activeChama.name} has been removed.`,
+    });
+    
+    setSelectedChamaId(null);
+    setIsDeleting(false);
   };
 
   if (isUserLoading || isChamasLoading) {
@@ -131,9 +162,33 @@ export default function DashboardPage() {
             
             <div className="flex gap-4">
               {activeChama && (
-                <Button size="sm" variant="outline" className="border-primary text-primary font-bold hidden sm:flex" onClick={handleShareInvite}>
-                  <Share2 className="h-4 w-4 mr-2" /> Invite
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" className="border-primary text-primary font-bold hidden sm:flex" onClick={handleShareInvite}>
+                    <Share2 className="h-4 w-4 mr-2" /> Invite
+                  </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10 hidden sm:flex">
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the Chama <strong>{activeChama.name}</strong> and remove all associated data from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteChama} className="bg-destructive text-white hover:bg-destructive/90">
+                          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete Chama"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               )}
               <Link href="/chamas/new">
                 <Button size="sm" className="bg-primary text-white font-bold">
