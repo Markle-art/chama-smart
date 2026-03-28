@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useUser, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,7 +44,9 @@ export default function NewChamaPage() {
     e.preventDefault();
     setLoading(true);
 
+    // Generate a unique ID for the Chama
     const chamaId = Math.random().toString(36).substring(7);
+    
     const chamaData = {
       id: chamaId,
       name: formData.name,
@@ -60,7 +62,10 @@ export default function NewChamaPage() {
       predictionDetails: 'Waiting for first contributions to analyze patterns.',
     };
 
-    addDocumentNonBlocking(collection(db, 'chamas'), chamaData);
+    // Use setDocumentNonBlocking with the specific ID to satisfy security rules
+    // (isValidId rule expects document path ID to match request.resource.data.id)
+    const docRef = doc(db, 'chamas', chamaId);
+    setDocumentNonBlocking(docRef, chamaData, { merge: true });
     
     // Optimistic redirect
     router.push('/dashboard');
