@@ -1,9 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RECENT_TRANSACTIONS, CHAMA_MEMBERS } from '@/lib/mock-data';
-import { CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
-export function TransactionHistory() {
+interface TransactionHistoryProps {
+  chamaId: string;
+}
+
+export function TransactionHistory({ chamaId }: TransactionHistoryProps) {
   return (
     <Card className="col-span-1 border-none shadow-sm">
       <CardHeader>

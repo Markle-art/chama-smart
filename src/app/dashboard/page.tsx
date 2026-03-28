@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -9,7 +9,14 @@ import { MemberContributions } from '@/components/dashboard/member-contributions
 import { TransactionHistory } from '@/components/dashboard/transaction-history';
 import { AiPrediction } from '@/components/dashboard/ai-prediction';
 import { Button } from '@/components/ui/button';
-import { Coins, Plus, Settings, LogOut, Loader2, Share2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Coins, Plus, Settings, LogOut, Loader2, Share2, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,8 +25,9 @@ export default function DashboardPage() {
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [selectedChamaId, setSelectedChamaId] = useState<string | null>(null);
 
-  // Redirect if not logged in - moved to useEffect to avoid render-phase navigation
+  // Redirect if not logged in
   useEffect(() => {
     if (!isUserLoading && (!user || user.isAnonymous)) {
       router.push('/login');
@@ -34,7 +42,17 @@ export default function DashboardPage() {
 
   const { data: chamas, isLoading: isChamasLoading } = useCollection(chamasQuery);
 
-  const activeChama = chamas?.[0]; // Default to first for MVP
+  // Set default selected chama when data loads
+  useEffect(() => {
+    if (chamas && chamas.length > 0 && !selectedChamaId) {
+      setSelectedChamaId(chamas[0].id);
+    }
+  }, [chamas, selectedChamaId]);
+
+  const activeChama = useMemo(() => {
+    if (!chamas || !selectedChamaId) return null;
+    return chamas.find(c => c.id === selectedChamaId) || chamas[0];
+  }, [chamas, selectedChamaId]);
 
   const handleShareInvite = () => {
     if (!activeChama) return;
@@ -46,13 +64,15 @@ export default function DashboardPage() {
     });
   };
 
-  if (isUserLoading || isChamasLoading || (!user || user.isAnonymous)) {
+  if (isUserLoading || isChamasLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
+
+  if (!user || user.isAnonymous) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -67,7 +87,7 @@ export default function DashboardPage() {
           </div>
           <nav className="flex-1 px-4 space-y-1">
             <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-primary bg-primary/5 rounded-lg font-medium">
-              <Coins className="h-4 w-4" />
+              <LayoutDashboard className="h-4 w-4" />
               Dashboard
             </Link>
             <Link href="/chamas/new" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors">
@@ -89,18 +109,35 @@ export default function DashboardPage() {
 
         <main className="flex-1 overflow-y-auto">
           <header className="h-16 border-b flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-            <h1 className="text-xl font-bold font-headline">
-              {activeChama ? activeChama.name : "Your Chamas"}
-            </h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold font-headline hidden md:block">
+                Dashboard
+              </h1>
+              {chamas && chamas.length > 0 && (
+                <Select value={selectedChamaId || ""} onValueChange={setSelectedChamaId}>
+                  <SelectTrigger className="w-[200px] border-primary/20 bg-white">
+                    <SelectValue placeholder="Select Chama" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {chamas.map((chama) => (
+                      <SelectItem key={chama.id} value={chama.id}>
+                        {chama.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            
             <div className="flex gap-4">
               {activeChama && (
-                <Button size="sm" variant="outline" className="border-primary text-primary font-bold" onClick={handleShareInvite}>
-                  <Share2 className="h-4 w-4 mr-2" /> Invite Members
+                <Button size="sm" variant="outline" className="border-primary text-primary font-bold hidden sm:flex" onClick={handleShareInvite}>
+                  <Share2 className="h-4 w-4 mr-2" /> Invite
                 </Button>
               )}
               <Link href="/chamas/new">
                 <Button size="sm" className="bg-primary text-white font-bold">
-                  <Plus className="h-4 w-4 mr-2" /> Create New
+                  <Plus className="h-4 w-4 mr-2" /> New
                 </Button>
               </Link>
             </div>

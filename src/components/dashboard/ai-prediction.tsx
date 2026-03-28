@@ -4,22 +4,27 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainCircuit, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
 import { predictSavingsGoal, PredictSavingsGoalOutput } from '@/ai/flows/ai-savings-goal-prediction-flow';
-import { CURRENT_CHAMA, CONTRIBUTION_HISTORY } from '@/lib/mock-data';
+import { CONTRIBUTION_HISTORY } from '@/lib/mock-data';
 import { Progress } from '@/components/ui/progress';
 
-export function AiPrediction() {
+interface AiPredictionProps {
+  chama: any;
+}
+
+export function AiPrediction({ chama }: AiPredictionProps) {
   const [prediction, setPrediction] = useState<PredictSavingsGoalOutput | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPrediction = async () => {
+      setLoading(true);
       try {
         const result = await predictSavingsGoal({
-          chamaId: CURRENT_CHAMA.id,
-          currentTotalContributions: CURRENT_CHAMA.currentTotalContributions,
-          targetGoalAmount: CURRENT_CHAMA.targetGoalAmount,
-          targetDate: CURRENT_CHAMA.targetDate,
-          startDate: CURRENT_CHAMA.startDate,
+          chamaId: chama.id,
+          currentTotalContributions: chama.currentBalance,
+          targetGoalAmount: chama.goalAmount,
+          targetDate: chama.goalDate,
+          startDate: chama.createdAt,
           contributionHistory: CONTRIBUTION_HISTORY,
         });
         setPrediction(result);
@@ -30,8 +35,10 @@ export function AiPrediction() {
       }
     };
 
-    fetchPrediction();
-  }, []);
+    if (chama) {
+      fetchPrediction();
+    }
+  }, [chama]);
 
   if (loading) {
     return (
@@ -69,10 +76,10 @@ export function AiPrediction() {
 
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-medium text-white/80">
-            <span>Progress: {((CURRENT_CHAMA.currentTotalContributions / CURRENT_CHAMA.targetGoalAmount) * 100).toFixed(0)}%</span>
-            <span>Target: KES {CURRENT_CHAMA.targetGoalAmount.toLocaleString()}</span>
+            <span>Progress: {((chama.currentBalance / chama.goalAmount) * 100).toFixed(0)}%</span>
+            <span>Target: KES {chama.goalAmount.toLocaleString()}</span>
           </div>
-          <Progress value={(CURRENT_CHAMA.currentTotalContributions / CURRENT_CHAMA.targetGoalAmount) * 100} className="h-2 bg-white/20" />
+          <Progress value={(chama.currentBalance / chama.goalAmount) * 100} className="h-2 bg-white/20" />
         </div>
 
         <div className="bg-white/10 p-4 rounded-xl space-y-2">
