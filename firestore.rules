@@ -58,10 +58,10 @@ service cloud.firestore {
     }
 
     match /chamas/{chamaId} {
-      // Allow PUBLIC read access to a specific Chama for the Join page (ID is a hard-to-guess token)
+      // Allow PUBLIC read access to a specific Chama for the Join page
       allow get: if true;
       
-      // Listing chamas (for the treasurer dashboard) requires sign-in
+      // Listing chamas requires sign-in
       allow list: if isSignedIn();
       
       // Admin-only writes
@@ -72,32 +72,30 @@ service cloud.firestore {
 
     match /chamas/{chamaId}/members/{memberId} {
       // Allow members or admins to see membership data
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
       
       // Admin-only writes
-      allow create: if isSignedIn() && isValidAdminField() && isValidId(memberId);
-      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow create: if isSignedIn() && isValidId(memberId);
+      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('id');
       allow delete: if isExistingAdmin(resource.data.adminUserId);
     }
 
     match /chamas/{chamaId}/transactions/{transactionId} {
-      allow get: if isAdminOf(resource.data.adminUserId);
-      allow list: if isAdminOf(resource.data.adminUserId);
-      
-      allow create: if isSignedIn() && isValidAdminField() && isValidId(transactionId);
-      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
-      allow delete: if isExistingAdmin(resource.data.adminUserId);
+      // Allow admins to manage, and anonymous users to create records of their payments
+      allow get, list: if isSignedIn();
+      allow create: if true; // Public create for M-Pesa push logging
+      allow update, delete: if isExistingAdmin(resource.data.adminUserId);
     }
 
     match /chamas/{chamaId}/members/{memberId}/contributions/{contributionId} {
-      // Allow reading contributions for transparency on the Join/Status page
+      // Allow reading contributions for transparency
       allow get: if true;
       allow list: if true;
       
       // Administrative control for record keeping
-      allow create: if isSignedIn() && isValidAdminField() && isValidId(contributionId);
-      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow create: if isSignedIn() && isValidId(contributionId);
+      allow update: if isExistingAdmin(resource.data.adminUserId);
       allow delete: if isExistingAdmin(resource.data.adminUserId);
     }
   }
