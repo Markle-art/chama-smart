@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-finance",
+      "description": "Abstract financial growth",
+      "imageUrl": "https://picsum.photos/seed/chama1/1200/800",
+      "imageHint": "finance growth"
+    },
+    {
+      "id": "student-group",
+      "description": "Happy university students",
+      "imageUrl": "https://picsum.photos/seed/chama2/800/600",
+      "imageHint": "students collaborating"
+    }
+  ]
 }
