@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Coins, ShieldCheck, Zap, BrainCircuit, Users } from 'lucide-react';
+import { Coins, ShieldCheck, Zap, BrainCircuit, Users, BarChart3, Globe } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -26,7 +26,7 @@ export default function LandingPage() {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold uppercase tracking-wider mb-4">
-                  Powered by AI Reconciliation
+                  The Future of Informal Finance
                 </Badge>
                 <h1 className="text-3xl font-headline font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
                   Automate Your Student <span className="text-primary italic">Chama</span>
@@ -85,29 +85,43 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="w-full py-20 bg-primary text-white">
-          <div className="container px-4 md:px-6 text-center space-y-8">
-            <h2 className="text-3xl font-headline font-bold tracking-tighter md:text-4xl">
-              Pitch Ready: "AI Removing Friction from African Informal Finance"
-            </h2>
-            <div className="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <ShieldCheck className="mt-1 h-6 w-6 shrink-0" />
-                  <div>
-                    <h4 className="font-bold text-lg">Trust Infrastructure</h4>
-                    <p className="text-primary-foreground/80">Building trust in informal groups by providing immutable, real-time proof of payments matched via AI.</p>
-                  </div>
-                </div>
+        <section className="w-full py-24 bg-primary text-white overflow-hidden relative">
+          <div className="absolute top-0 right-0 -mt-20 -mr-20 opacity-10">
+            <Globe size={400} />
+          </div>
+          <div className="container px-4 md:px-6 relative z-10">
+            <div className="flex flex-col items-center text-center space-y-8 mb-16">
+              <h2 className="text-3xl font-headline font-bold tracking-tighter md:text-5xl max-w-3xl">
+                Modernizing Tradition with Intelligent Infrastructure
+              </h2>
+              <p className="text-primary-foreground/80 max-w-2xl text-lg">
+                Informal savings groups (Chamas) are the backbone of community finance. We provide the digital trust layer needed to scale them safely.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 space-y-4">
+                <ShieldCheck className="h-10 w-10 text-accent" />
+                <h4 className="font-bold text-xl font-headline text-white">Digital Trust</h4>
+                <p className="text-primary-foreground/70 text-sm leading-relaxed">
+                  Eliminate financial disputes with an immutable AI-verified audit trail for every single contribution.
+                </p>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <Zap className="mt-1 h-6 w-6 shrink-0" />
-                  <div>
-                    <h4 className="font-bold text-lg">Scale the Informal</h4>
-                    <p className="text-primary-foreground/80">Allowing treasurers to manage 100+ members without errors, turning manual chamas into automated savings engines.</p>
-                  </div>
-                </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 space-y-4">
+                <BarChart3 className="h-10 w-10 text-accent" />
+                <h4 className="font-bold text-xl font-headline text-white">Actionable Insights</h4>
+                <p className="text-primary-foreground/70 text-sm leading-relaxed">
+                  Go beyond tracking. Our AI predicts shortfalls before they happen, allowing your group to adjust early.
+                </p>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border border-white/20 space-y-4">
+                <Globe className="h-10 w-10 text-accent" />
+                <h4 className="font-bold text-xl font-headline text-white">Scale Effortlessly</h4>
+                <p className="text-primary-foreground/70 text-sm leading-relaxed">
+                  Empower treasurers to manage hundreds of members with the same ease as a small group of five.
+                </p>
               </div>
             </div>
           </div>
@@ -116,7 +130,7 @@ export default function LandingPage() {
 
       <footer className="py-12 border-t bg-muted">
         <div className="container px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">© 2024 ChamaSmart. Empowering Student Savings in Kenya.</p>
+          <p className="text-sm text-muted-foreground">© 2026 ChamaSmart. Empowering Student Savings in Kenya.</p>
           <nav className="flex gap-4 sm:gap-6">
             <Link className="text-sm hover:underline underline-offset-4" href="#">Terms</Link>
             <Link className="text-sm hover:underline underline-offset-4" href="#">Privacy</Link>
