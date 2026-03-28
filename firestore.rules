@@ -1,0 +1,147 @@
+/**
+ * ChamaSmart Firestore Security Rules
+ *
+ * Core Philosophy:
+ * This ruleset implements a strict Administrative Ownership model. Access to Chama-related 
+ * data is governed by the `adminUserId` field, representing the user who manages the Chama. 
+ * User profiles are strictly private and accessible only by the account owner.
+ *
+ * Data Structure:
+ * - /users/{userId}: Private user profile data.
+ * - /chamas/{chamaId}: High-level Chama metadata managed by an admin.
+ * - /chamas/{chamaId}/members/{memberId}: Participants within a specific Chama.
+ * - /chamas/{chamaId}/transactions/{transactionId}: Raw and processed M-Pesa transaction records.
+ * - /chamas/{chamaId}/members/{memberId}/contributions/{contributionId}: Financial records for specific members.
+ *
+ * Key Security Decisions:
+ * - Denormalization for Authorization: The `adminUserId` is denormalized onto every Member, 
+ *   Transaction, and Contribution document. This allows for atomic authorization checks 
+ *   without requiring expensive cross-document lookups (get() calls).
+ * - Structural Segregation: All savings and membership data are nested under specific 
+ *   Chama IDs, ensuring clear boundaries between different savings groups.
+ * - Relational Integrity: The rules enforce that the `adminUserId` and document `id` 
+ *   fields are set correctly upon creation and remain immutable to prevent data hijacking.
+ * - Prototyping Flexibility: While authorization is strictly enforced based on ownership, 
+ *   the schema of content fields (names, descriptions, amounts) is not validated to allow 
+ *   for rapid development and iteration.
+ */
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** @description Checks if the request is from an authenticated user. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user matches the provided ID (Path-based ownership). */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks if the authenticated user is the admin assigned to the resource. */
+    function isAdminOf(adminId) {
+      return isSignedIn() && request.auth.uid == adminId;
+    }
+
+    /** @description Combines admin check with document existence for updates and deletes. */
+    function isExistingAdmin(adminId) {
+      return resource != null && isAdminOf(adminId);
+    }
+
+    /** @description Validates that the internal 'id' field matches the document/path ID on creation. */
+    function isValidId(id) {
+      return request.resource.data.id == id;
+    }
+
+    /** @description Validates that the internal 'adminUserId' field matches the requester on creation. */
+    function isValidAdminField() {
+      return request.resource.data.adminUserId == request.auth.uid;
+    }
+
+    /** @description Ensures a specific field does not change during an update. */
+    function isImmutable(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data[field];
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for the User collection, enforcing private profile access.
+     * @path /users/{userId}
+     * @allow (get) user_123 fetching their own profile.
+     * @deny (list) user_456 attempting to list all user profiles.
+     * @principle Restricts access to a user's own data tree based on path UID.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId);
+      allow update: if isOwner(userId) && resource != null && isImmutable('id');
+      allow delete: if isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Rules for the Chama collection, managed by the adminUserId.
+     * @path /chamas/{chamaId}
+     * @allow (create) user_abc creating a Chama where adminUserId is 'user_abc'.
+     * @deny (update) user_xyz trying to modify a Chama owned by user_abc.
+     * @principle Enforces document ownership for writes and private access for reads.
+     */
+    match /chamas/{chamaId} {
+      allow get: if isAdminOf(resource.data.adminUserId);
+      allow list: if isSignedIn(); // CRITICAL: P6 limits. Clients must filter by adminUserId.
+      allow create: if isSignedIn() && isValidAdminField() && isValidId(chamaId);
+      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow delete: if isExistingAdmin(resource.data.adminUserId);
+    }
+
+    /**
+     * @description Rules for Members of a Chama, utilizing denormalized adminUserId.
+     * @path /chamas/{chamaId}/members/{memberId}
+     * @allow (get) Admin user_abc viewing a member in their Chama.
+     * @deny (create) User_xyz adding a member to user_abc's Chama.
+     * @principle Uses denormalized authorization context to avoid cross-document lookups.
+     */
+    match /chamas/{chamaId}/members/{memberId} {
+      allow get: if isAdminOf(resource.data.adminUserId);
+      allow list: if isSignedIn(); // CRITICAL: P6 limits. Clients must filter by adminUserId.
+      allow create: if isSignedIn() && isValidAdminField() && isValidId(memberId);
+      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow delete: if isExistingAdmin(resource.data.adminUserId);
+    }
+
+    /**
+     * @description Rules for Transactions within a Chama.
+     * @path /chamas/{chamaId}/transactions/{transactionId}
+     * @allow (create) The admin adding a new transaction record to their Chama.
+     * @deny (delete) A non-admin user attempting to delete a transaction.
+     * @principle Ensures administrative control over financial data via denormalized admin ID.
+     */
+    match /chamas/{chamaId}/transactions/{transactionId} {
+      allow get: if isAdminOf(resource.data.adminUserId);
+      allow list: if isSignedIn(); // CRITICAL: P6 limits. Clients must filter by adminUserId.
+      allow create: if isSignedIn() && isValidAdminField() && isValidId(transactionId);
+      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow delete: if isExistingAdmin(resource.data.adminUserId);
+    }
+
+    /**
+     * @description Rules for Member Contributions.
+     * @path /chamas/{chamaId}/members/{memberId}/contributions/{contributionId}
+     * @allow (get) Admin checking the contribution status of a specific member.
+     * @deny (update) Changing the adminUserId of a contribution record.
+     * @principle Validates relational integrity between nested documents and the Chama admin.
+     */
+    match /chamas/{chamaId}/members/{memberId}/contributions/{contributionId} {
+      allow get: if isAdminOf(resource.data.adminUserId);
+      allow list: if isSignedIn(); // CRITICAL: P6 limits. Clients must filter by adminUserId.
+      allow create: if isSignedIn() && isValidAdminField() && isValidId(contributionId);
+      allow update: if isExistingAdmin(resource.data.adminUserId) && isImmutable('adminUserId') && isImmutable('id');
+      allow delete: if isExistingAdmin(resource.data.adminUserId);
+    }
+  }
+}

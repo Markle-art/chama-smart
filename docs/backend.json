@@ -1,0 +1,446 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents an individual user of the ChamaSmart platform who can create, manage, or participate in Chamas.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for contact and platform login. (Format: email)",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's given first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's given last name."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's primary phone number, typically their M-Pesa registered number."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "phoneNumber",
+        "createdAt"
+      ]
+    },
+    "Chama": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Chama",
+      "type": "object",
+      "description": "Represents a group savings scheme, defining its goals, members, and overall progress.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Chama entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the Chama (e.g., 'Class of 2025 Trip Savings')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the Chama's purpose and objectives."
+        },
+        "goalAmount": {
+          "type": "number",
+          "description": "The target total savings amount the Chama aims to collect (e.g., 150000 KES)."
+        },
+        "goalDate": {
+          "type": "string",
+          "description": "The target date by which the Chama intends to reach its savings goal. (Format: date-time)",
+          "format": "date-time"
+        },
+        "adminUserId": {
+          "type": "string",
+          "description": "Reference to the User who created or primarily manages this Chama. (Relationship: User 1:N Chama)"
+        },
+        "currentBalance": {
+          "type": "number",
+          "description": "The current aggregate amount of money collected for this Chama from all reconciled contributions."
+        },
+        "status": {
+          "type": "string",
+          "description": "The operational status of the Chama (e.g., 'Active', 'Completed', 'Suspended')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the Chama was created. (Format: date-time)",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the Chama's details were last updated. (Format: date-time)",
+          "format": "date-time"
+        },
+        "predictionStatus": {
+          "type": "string",
+          "description": "The AI's latest assessment of the Chama's progress towards its goal (e.g., 'OnTrack', 'OffTrack', 'NeedsAttention')."
+        },
+        "predictionDetails": {
+          "type": "string",
+          "description": "Detailed notes or analysis provided by the AI regarding the savings goal prediction."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "goalAmount",
+        "goalDate",
+        "adminUserId",
+        "currentBalance",
+        "status",
+        "createdAt"
+      ]
+    },
+    "Member": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Member",
+      "type": "object",
+      "description": "Represents an individual participant within a specific Chama, storing details necessary for contribution tracking and AI reconciliation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Member entity."
+        },
+        "chamaId": {
+          "type": "string",
+          "description": "Reference to the Chama this member belongs to. (Relationship: Chama 1:N Member)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional reference to a User if this member is also a ChamaSmart platform user. (Relationship: User 1:N Member, if applicable)"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The member's first name, used by AI for matching M-Pesa transactions."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The member's last name, used by AI for matching M-Pesa transactions."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The member's M-Pesa registered phone number, critical for AI reconciliation."
+        },
+        "nicknames": {
+          "type": "array",
+          "description": "An array of alternative names or nicknames associated with the member, enhancing AI reconciliation accuracy.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expectedContributionAmount": {
+          "type": "number",
+          "description": "The regular or expected contribution amount this member is supposed to make."
+        },
+        "totalContributed": {
+          "type": "number",
+          "description": "The cumulative sum of all successfully reconciled contributions made by this member to their Chama."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the member within the Chama (e.g., 'Active', 'Inactive', 'OnHold')."
+        },
+        "joinedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the member joined the Chama. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "chamaId",
+        "firstName",
+        "lastName",
+        "phoneNumber",
+        "nicknames",
+        "expectedContributionAmount",
+        "totalContributed",
+        "status",
+        "joinedAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a raw M-Pesa C2B payment received via webhook, stored before reconciliation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Transaction entity (internal ChamaSmart ID, typically generated upon receipt)."
+        },
+        "mPesaTransId": {
+          "type": "string",
+          "description": "The unique transaction ID provided by M-Pesa (TransID from the incoming payload)."
+        },
+        "transAmount": {
+          "type": "number",
+          "description": "The amount of money transacted, as per the M-Pesa payload."
+        },
+        "msisdn": {
+          "type": "string",
+          "description": "The M-Pesa sender's phone number (MSISDN from the payload)."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The sender's first name as provided by M-Pesa."
+        },
+        "middleName": {
+          "type": "string",
+          "description": "The sender's middle name as provided by M-Pesa (if available in payload)."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The sender's last name as provided by M-Pesa (if available in payload)."
+        },
+        "billRefNumber": {
+          "type": "string",
+          "description": "The bill reference number or account number provided by the sender, crucial for reconciliation."
+        },
+        "transactionTime": {
+          "type": "string",
+          "description": "The timestamp when the M-Pesa transaction occurred (TransTime from payload). (Format: date-time)",
+          "format": "date-time"
+        },
+        "businessShortCode": {
+          "type": "string",
+          "description": "The M-Pesa Business Short Code (Paybill or Till number) that received the payment."
+        },
+        "rawPayload": {
+          "type": "string",
+          "description": "The complete raw JSON string payload received from the M-Pesa webhook, stored for auditing and debugging."
+        },
+        "receivedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the ChamaSmart system received this webhook payload. (Format: date-time)",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current processing status of the transaction within ChamaSmart (e.g., 'Pending Reconciliation', 'Reconciled', 'Needs Review', 'Ignored')."
+        },
+        "reconciledChamaId": {
+          "type": "string",
+          "description": "Reference to the Chama this transaction was successfully reconciled to. (Relationship: Chama 1:N Transaction)"
+        },
+        "reconciledMemberId": {
+          "type": "string",
+          "description": "Reference to the Member who made this transaction, after successful AI or manual reconciliation. (Relationship: Member 1:N Transaction)"
+        },
+        "reconciliationConfidence": {
+          "type": "number",
+          "description": "A numerical score (0.0-1.0) indicating the AI's confidence level in the reconciliation match."
+        },
+        "reconciliationNotes": {
+          "type": "string",
+          "description": "Textual notes or explanations generated by the AI or added during manual review regarding the reconciliation outcome."
+        },
+        "reconciledBy": {
+          "type": "string",
+          "description": "Indicates whether the reconciliation was performed automatically by 'AI' or through 'Manual' intervention."
+        }
+      },
+      "required": [
+        "id",
+        "mPesaTransId",
+        "transAmount",
+        "msisdn",
+        "firstName",
+        "billRefNumber",
+        "transactionTime",
+        "businessShortCode",
+        "rawPayload",
+        "receivedAt",
+        "status"
+      ]
+    },
+    "Contribution": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contribution",
+      "type": "object",
+      "description": "Represents a confirmed and reconciled financial contribution made by a Member to a Chama.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Contribution entity."
+        },
+        "chamaId": {
+          "type": "string",
+          "description": "Reference to the Chama to which this contribution belongs. (Relationship: Chama 1:N Contribution)"
+        },
+        "memberId": {
+          "type": "string",
+          "description": "Reference to the Member who made this contribution. (Relationship: Member 1:N Contribution)"
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Reference to the raw M-Pesa Transaction that initiated this contribution. (Relationship: Transaction 1:N Contribution)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The exact amount of money contributed by the member in this instance."
+        },
+        "contributionDate": {
+          "type": "string",
+          "description": "The date and time when this contribution was recorded or effectively made. (Format: date-time)",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the contribution (e.g., 'Paid', 'Overpaid', 'Underpaid', 'Pending')."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any additional notes or remarks specific to this contribution."
+        },
+        "recordedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when this contribution record was created or last updated in the system. (Format: date-time)",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "chamaId",
+        "memberId",
+        "transactionId",
+        "amount",
+        "contributionDate",
+        "status",
+        "recordedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores individual user profiles. Access is restricted to the authenticated user matching the 'userId' in the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, corresponding to Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chamas/{chamaId}",
+        "definition": {
+          "entityName": "Chama",
+          "schema": {
+            "$ref": "#/backend/entities/Chama"
+          },
+          "description": "Top-level collection for Chama (group savings scheme) entities. Documents contain 'adminUserId' for authorization, which must match the requesting user's UID. All subcollections inherit this 'adminUserId' for authorization independence.",
+          "params": [
+            {
+              "name": "chamaId",
+              "description": "The unique ID of the Chama."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chamas/{chamaId}/members/{memberId}",
+        "definition": {
+          "entityName": "Member",
+          "schema": {
+            "$ref": "#/backend/entities/Member"
+          },
+          "description": "Subcollection storing members of a specific Chama. Includes denormalized 'adminUserId' (from parent Chama) for authorization independence and QAP compliance.",
+          "params": [
+            {
+              "name": "chamaId",
+              "description": "The unique ID of the parent Chama."
+            },
+            {
+              "name": "memberId",
+              "description": "The unique ID of the member within the Chama."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chamas/{chamaId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Subcollection storing M-Pesa transactions processed for a specific Chama. Includes denormalized 'adminUserId' (from parent Chama) for authorization independence and QAP compliance.",
+          "params": [
+            {
+              "name": "chamaId",
+              "description": "The unique ID of the parent Chama to which this transaction is reconciled."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique ID of the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/chamas/{chamaId}/members/{memberId}/contributions/{contributionId}",
+        "definition": {
+          "entityName": "Contribution",
+          "schema": {
+            "$ref": "#/backend/entities/Contribution"
+          },
+          "description": "Subcollection storing confirmed contributions made by a member to a Chama. Includes denormalized 'adminUserId' (from parent Chama) for authorization independence and QAP compliance.",
+          "params": [
+            {
+              "name": "chamaId",
+              "description": "The unique ID of the parent Chama."
+            },
+            {
+              "name": "memberId",
+              "description": "The unique ID of the parent Member."
+            },
+            {
+              "name": "contributionId",
+              "description": "The unique ID of the contribution."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for ChamaSmart is designed following the core principles of Authorization Independence, Structural Segregation, and Access Modeling to ensure security, scalability, and debuggability. All authorization relies on Database Access Control (DBAC), using `request.auth.uid` against denormalized `adminUserId` fields.\n\n**Authorization Independence (CRITICAL) and QAPs (Rules are not Filters):**\nTo avoid hierarchical authorization dependencies and enable efficient `list` operations without `get()` calls in security rules, the `adminUserId` is denormalized across all relevant subcollections and related top-level collections. This is a fundamental aspect of the design, ensuring that every document explicitly carries the necessary authorization context.\n\n*   **User Profiles (`/users/{userId}`):** User profiles are private and secured by path-based ownership. The `userId` in the path directly corresponds to `request.auth.uid`.\n\n*   **Chamas (`/chamas/{chamaId}`):** Each Chama document includes an `adminUserId` field, which identifies the platform user who created and manages the Chama. This `adminUserId` is the primary key for authorization for all data related to that Chama.\n\n*   **Members (`/chamas/{chamaId}/members/{memberId}`):** Member documents are nested under their respective Chamas. For authorization independence, each `Member` document explicitly includes the `adminUserId` from its parent Chama. This allows security rules to evaluate access for any `Member` document solely based on its own data, making `list` operations (e.g., retrieving all members for Chamas managed by `request.auth.uid`) performant and secure without needing to `get()` the parent Chama document.\n\n*   **Transactions (`/chamas/{chamaId}/transactions/{transactionId}`):** Incoming M-Pesa transactions, once parsed and associated with a Chama, are stored in a subcollection under that Chama. Each `Transaction` document is denormalized to include the `adminUserId` of the Chama it belongs to. This enables an admin to easily list and manage all transactions for their Chamas, as well as providing atomic security rule evaluation.\n\n*   **Contributions (`/chamas/{chamaId}/members/{memberId}/contributions/{contributionId}`):** Contribution records are nested further under specific members within Chamas. Each `Contribution` document, similarly, includes the denormalized `adminUserId` of the parent Chama. This ensures that any operation on a Contribution can be authorized against `request.auth.uid` and `resource.data.adminUserId` directly, supporting efficient queries and strict security enforcement.\n\n**Structural Segregation (Homogeneous Security Posture):**\nEach collection and subcollection (`/users`, `/chamas`, `/chamas/{chamaId}/members`, `/chamas/{chamaId}/transactions`, `/chamas/{chamaId}/members/{memberId}/contributions`) is designed to hold documents with consistent security requirements. For example, all documents within `/chamas/{chamaId}/members` are governed by the `adminUserId` of that specific Chama, preventing mixed access patterns within a single collection.\n\n**Access Modeling:**\n\n1.  **Private Data:** `/users/{userId}` ensures individual user profiles are private.\n2.  **Hierarchical Paths for User-Owned Data:** `/chamas/{chamaId}` establishes `Chama` ownership by `adminUserId`.\n3.  **Continued Hierarchy for Nested Data:** `/chamas/{chamaId}/members/{memberId}`, `/chamas/{chamaId}/transactions/{transactionId}`, and `/chamas/{chamaId}/members/{memberId}/contributions/{contributionId}` extend the ownership model. The `adminUserId` denormalization in each document enables atomicity and QAP compliance.\n\n**Data Clarity and Predictability:**\nStandardized field names (`adminUserId`), descriptive wildcards (`{chamaId}`, `{memberId}`), and explicit `status` fields contribute to a clear, predictable schema that simplifies rule writing and application development."
+  }
+}
