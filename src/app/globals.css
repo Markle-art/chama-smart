@@ -4,53 +4,51 @@
 
 @layer base {
   :root {
-    --background: 48 40% 96%;
-    --foreground: 20 10% 15%;
+    --background: 116 35% 97%; /* Soft M-Pesa Green Tint */
+    --foreground: 116 50% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 20 10% 15%;
+    --card-foreground: 116 50% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 20 10% 15%;
-    --primary: 40 68% 43%;
-    --primary-foreground: 48 40% 98%;
-    --secondary: 40 20% 90%;
-    --secondary-foreground: 40 68% 20%;
-    --muted: 40 10% 92%;
-    --muted-foreground: 20 10% 40%;
-    --accent: 15 82% 51%;
-    --accent-foreground: 48 40% 98%;
+    --popover-foreground: 116 50% 10%;
+    --primary: 116 44% 46%;    /* Official M-Pesa Green */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 116 20% 92%;
+    --secondary-foreground: 116 44% 20%;
+    --muted: 116 10% 94%;
+    --muted-foreground: 116 10% 40%;
+    --accent: 358 77% 51%;     /* Official Safaricom Red */
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 15% 85%;
-    --input: 40 15% 85%;
-    --ring: 40 68% 43%;
-    --radius: 0.75rem;
-    --chart-1: 40 68% 43%;
-    --chart-2: 15 82% 51%;
-    --chart-3: 35 90% 60%;
+    --border: 116 15% 90%;
+    --input: 116 15% 90%;
+    --ring: 116 44% 46%;
+    --radius: 1rem;
+    --chart-1: 116 44% 46%;
+    --chart-2: 358 77% 51%;
+    --chart-3: 50 97% 50%;
     --chart-4: 197 37% 24%;
     --chart-5: 43 74% 66%;
   }
 
   .dark {
-    --background: 20 10% 5%;
-    --foreground: 48 40% 98%;
-    --card: 20 10% 8%;
-    --card-foreground: 48 40% 98%;
-    --popover: 20 10% 8%;
-    --popover-foreground: 48 40% 98%;
-    --primary: 40 68% 53%;
-    --primary-foreground: 20 10% 5%;
-    --secondary: 20 10% 15%;
-    --secondary-foreground: 48 40% 98%;
-    --muted: 20 10% 15%;
-    --muted-foreground: 20 10% 65%;
-    --accent: 15 82% 51%;
-    --accent-foreground: 48 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 20 10% 15%;
-    --input: 20 10% 15%;
-    --ring: 40 68% 53%;
+    --background: 116 50% 5%;
+    --foreground: 116 35% 98%;
+    --card: 116 50% 8%;
+    --card-foreground: 116 35% 98%;
+    --popover: 116 50% 8%;
+    --popover-foreground: 116 35% 98%;
+    --primary: 116 44% 53%;
+    --primary-foreground: 116 50% 5%;
+    --secondary: 116 50% 15%;
+    --secondary-foreground: 116 35% 98%;
+    --muted: 116 50% 15%;
+    --muted-foreground: 116 35% 65%;
+    --accent: 358 77% 51%;
+    --accent-foreground: 0 0% 98%;
+    --border: 116 50% 15%;
+    --input: 116 50% 15%;
+    --ring: 116 44% 53%;
   }
 }
 

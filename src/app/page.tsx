@@ -6,8 +6,8 @@ import { Coins, ShieldCheck, Zap, BrainCircuit, Users, BarChart3, Globe } from '
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/50 backdrop-blur-md sticky top-0 z-50">
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-background/50 backdrop-blur-md sticky top-0 z-50">
         <Link className="flex items-center justify-center" href="/">
           <Coins className="h-6 w-6 text-primary mr-2" />
           <span className="font-headline font-bold text-xl tracking-tight text-primary">ChamaSmart</span>
@@ -21,11 +21,11 @@ export default function LandingPage() {
       </header>
 
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-white to-background">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-background/50">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-4">
-                <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold uppercase tracking-wider mb-2">
+                <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold uppercase tracking-wider mb-2 bg-primary/10 text-primary border-none">
                   The Future of Informal Finance
                 </Badge>
                 <h1 className="text-4xl font-headline font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none">
@@ -45,12 +45,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-16 sm:py-20 bg-white">
+        <section id="features" className="w-full py-16 sm:py-20">
           <div className="container px-4 md:px-6">
             <div className="grid gap-12 lg:grid-cols-3">
               <Card className="border-none shadow-none bg-transparent">
                 <CardContent className="pt-6 text-center space-y-4">
-                  <div className="mx-auto bg-primary/10 p-3 rounded-2xl w-fit">
+                  <div className="mx-auto bg-primary/10 p-4 rounded-2xl w-fit">
                     <Zap className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-xl font-headline font-bold">Instant Reconciliation</h3>
@@ -61,7 +61,7 @@ export default function LandingPage() {
               </Card>
               <Card className="border-none shadow-none bg-transparent">
                 <CardContent className="pt-6 text-center space-y-4">
-                  <div className="mx-auto bg-accent/10 p-3 rounded-2xl w-fit">
+                  <div className="mx-auto bg-accent/10 p-4 rounded-2xl w-fit">
                     <BrainCircuit className="h-8 w-8 text-accent" />
                   </div>
                   <h3 className="text-xl font-headline font-bold">Goal Prediction</h3>
@@ -72,7 +72,7 @@ export default function LandingPage() {
               </Card>
               <Card className="border-none shadow-none bg-transparent">
                 <CardContent className="pt-6 text-center space-y-4">
-                  <div className="mx-auto bg-primary/10 p-3 rounded-2xl w-fit">
+                  <div className="mx-auto bg-primary/10 p-4 rounded-2xl w-fit">
                     <Users className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-xl font-headline font-bold">Transparency First</h3>
@@ -85,7 +85,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="w-full py-20 sm:py-24 bg-primary text-white overflow-hidden relative">
+        <section className="w-full py-20 sm:py-24 bg-primary text-white overflow-hidden relative rounded-[2rem] mx-4 lg:mx-8 w-[calc(100%-2rem)] lg:w-[calc(100%-4rem)]">
           <div className="absolute top-0 right-0 -mt-20 -mr-20 opacity-10 pointer-events-none">
             <Globe size={400} />
           </div>
@@ -128,12 +128,12 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="py-12 border-t bg-muted">
+      <footer className="py-12 border-t mt-12 bg-muted/30">
         <div className="container px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-sm text-muted-foreground text-center md:text-left">© 2026 ChamaSmart. Empowering Student Savings in Kenya.</p>
+          <p className="text-sm text-muted-foreground text-center md:text-left font-medium">© 2026 ChamaSmart. Empowering Student Savings in Kenya.</p>
           <nav className="flex gap-4 sm:gap-6">
-            <Link className="text-sm hover:underline underline-offset-4" href="#">Terms</Link>
-            <Link className="text-sm hover:underline underline-offset-4" href="#">Privacy</Link>
+            <Link className="text-sm hover:underline underline-offset-4 font-medium" href="#">Terms</Link>
+            <Link className="text-sm hover:underline underline-offset-4 font-medium" href="#">Privacy</Link>
           </nav>
         </div>
       </footer>
