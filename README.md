@@ -173,8 +173,6 @@ The Treasurer stops chasing people. The system runs itself.
 *Live view showing Total Collected, Savings Goal, Completion %, Group Members, Recent Activity feed, and the AI-powered Treasurer Tool panel*
 
 ### ➕ Create New Chama
-![Create Chama](./docs/Creating a new account.png)
-*Treasurer sets Chama Name, Description, Goal Amount (KES), and Target Date — one click generates the shareable invite link*
 
 ---
 
