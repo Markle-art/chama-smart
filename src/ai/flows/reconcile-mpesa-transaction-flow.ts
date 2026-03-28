@@ -17,7 +17,6 @@ const MpesaTransactionSchema = z.object({
   MSISDN: z.string().describe('Phone number of the sender.'),
   FirstName: z.string().describe('First name of the sender.'),
   BillRefNumber: z.string().optional().describe('Bill reference number provided by the sender. Can be empty or unhelpful.'),
-  // Add other relevant fields from M-Pesa C2B webhook if available
 });
 
 const ChamaMemberSchema = z.object({
@@ -51,43 +50,30 @@ const reconciliationPrompt = ai.definePrompt({
   output: { schema: ReconcileMpesaTransactionOutputSchema },
   prompt: `You are an expert financial reconciler for a Kenyan student group savings (Chama). Your task is to accurately match an M-Pesa payment to one of the active chama members.
 
-Here is the incoming M-Pesa transaction:
-Transaction ID: {{{transaction.TransID}}}
-Amount: KES {{{transaction.TransAmount}}}
-Sender Phone: {{{transaction.MSISDN}}}
-Sender Name: {{{transaction.FirstName}}}
-Reference: {{{transaction.BillRefNumber}}}
+Incoming M-Pesa Transaction:
+- ID: {{{transaction.TransID}}}
+- Amount: KES {{{transaction.TransAmount}}}
+- Phone: {{{transaction.MSISDN}}}
+- Name: {{{transaction.FirstName}}}
+- Ref: {{{transaction.BillRefNumber}}}
 
-Here is the list of active chama members. You must match the transaction to one of these members. If you cannot make a confident match, indicate that it needs review.
-
-Chama Members:
+Active Chama Members:
 {{#each chamaMembers}}
   - ID: {{this.id}}, Name: {{this.name}}, Phone: {{this.phone}}, Nicknames: {{#if this.nicknames}}{{#each this.nicknames}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 {{/each}}
 
-Match Criteria (in order of priority, but consider all):
-1.  **Phone Number (MSISDN):** This is the strongest indicator. Prioritize exact matches.
-2.  **Sender First Name:** Compare the 'FirstName' from the M-Pesa transaction with member names and nicknames. Be flexible with variations (e.g., 'Brian' vs 'Bryan').
-3.  **Bill Reference Number (BillRefNumber):** Sometimes members include their name or ID here, but it can be very unreliable or empty.
-4.  **Inferred Patterns:** While not explicitly provided for past transactions here, consider if the sender's name or number strongly suggests a particular member, even with slight discrepancies, if no perfect match is found. Avoid making assumptions on patterns not explicitly in the data.
+Match Criteria:
+1. Phone Number: Strongest indicator.
+2. Name/Nicknames: Flexible matching (e.g., 'Brian' vs 'Bryan').
+3. Reference: Use if it contains member identifiers.
 
-Your output MUST be a JSON object conforming to the following schema:
-- matchedMemberId: string | null (The ID of the matched member, or null if no confident match)
-- confidenceScore: number (A score from 0 to 1, where 1 is perfect confidence)
-- needsReview: boolean (True if confidence is low, say below 0.7, or no match is found)
-- reason: string (A brief explanation for the match, or why it needs review and what was unclear)
+Example Output (Confidence Match):
+{"matchedMemberId": "member123", "confidenceScore": 0.95, "needsReview": false, "reason": "Exact phone number match."}
 
-Consider the provided M-Pesa transaction details and the member list carefully to determine the best match. If the sender's name or phone number does not closely align with any member, or if there are multiple plausible matches, set `needsReview` to true.
+Example Output (Low Confidence):
+{"matchedMemberId": null, "confidenceScore": 0.4, "needsReview": true, "reason": "Multiple potential matches for name 'John'."}
 
-Example Output (for a confident match):
-{{"matchedMemberId": "member123", "confidenceScore": 0.95, "needsReview": false, "reason": "Exact phone number match with member123."}}
-
-Example Output (for a match needing review):
-{{"matchedMemberId": null, "confidenceScore": 0.4, "needsReview": true, "reason": "Sender name 'John' and phone '2547XXXXXXXX' could belong to multiple members, or phone not registered."}}
-
-Example Output (for a name match, but no phone):
-{{"matchedMemberId": "member456", "confidenceScore": 0.75, "needsReview": false, "reason": "Strong name match with member456, phone number mismatch noted but other details align."}}
-`,
+Analyze the details carefully and return the appropriate JSON matching the defined schema.`,
 });
 
 const reconcileMpesaTransactionFlow = ai.defineFlow(
