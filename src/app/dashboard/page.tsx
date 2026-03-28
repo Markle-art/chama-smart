@@ -27,7 +27,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Coins, Plus, Settings, LogOut, Loader2, Share2, LayoutDashboard, Trash2 } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Coins, Plus, Settings, LogOut, Loader2, Share2, LayoutDashboard, Trash2, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 
@@ -105,33 +112,39 @@ export default function DashboardPage() {
 
   if (!user || user.isAnonymous) return null;
 
+  const NavLinks = () => (
+    <nav className="flex-1 space-y-1">
+      <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-primary bg-primary/5 rounded-lg font-medium">
+        <LayoutDashboard className="h-4 w-4" />
+        Dashboard
+      </Link>
+      <Link href="/chamas/new" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors">
+        <Plus className="h-4 w-4" />
+        New Chama
+      </Link>
+      <Link href="#" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors">
+        <Settings className="h-4 w-4" />
+        Settings
+      </Link>
+    </nav>
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="hidden lg:flex w-64 flex-col border-r bg-white">
+        {/* Sidebar - Desktop */}
+        <aside className="hidden lg:flex w-64 flex-col border-r bg-white sticky top-0 h-screen">
           <div className="p-6">
             <Link className="flex items-center" href="/">
               <Coins className="h-6 w-6 text-primary mr-2" />
               <span className="font-headline font-bold text-xl tracking-tight text-primary">ChamaSmart</span>
             </Link>
           </div>
-          <nav className="flex-1 px-4 space-y-1">
-            <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 text-primary bg-primary/5 rounded-lg font-medium">
-              <LayoutDashboard className="h-4 w-4" />
-              Dashboard
-            </Link>
-            <Link href="/chamas/new" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors">
-              <Plus className="h-4 w-4" />
-              New Chama
-            </Link>
-            <Link href="#" className="flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-muted rounded-lg font-medium transition-colors">
-              <Settings className="h-4 w-4" />
-              Settings
-            </Link>
-          </nav>
+          <div className="px-4 flex-1">
+            <NavLinks />
+          </div>
           <div className="p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground" onClick={() => auth.signOut()}>
+            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive" onClick={() => auth.signOut()}>
               <LogOut className="h-4 w-4" />
               Sign Out
             </Button>
@@ -139,14 +152,42 @@ export default function DashboardPage() {
         </aside>
 
         <main className="flex-1 overflow-y-auto">
-          <header className="h-16 border-b flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold font-headline hidden md:block">
+          {/* Header */}
+          <header className="h-16 border-b flex items-center justify-between px-4 lg:px-8 bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-2 lg:gap-4">
+              {/* Mobile Menu Trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="lg:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[280px] p-0">
+                  <SheetHeader className="p-6 text-left border-b">
+                    <SheetTitle className="flex items-center">
+                      <Coins className="h-6 w-6 text-primary mr-2" />
+                      <span className="text-primary">ChamaSmart</span>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4 flex flex-col h-[calc(100%-80px)]">
+                    <NavLinks />
+                    <div className="mt-auto pt-4 border-t">
+                      <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive" onClick={() => auth.signOut()}>
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              <h1 className="text-lg font-bold font-headline hidden sm:block">
                 Dashboard
               </h1>
+              
               {chamas && chamas.length > 0 && (
                 <Select value={selectedChamaId || ""} onValueChange={setSelectedChamaId}>
-                  <SelectTrigger className="w-[200px] border-primary/20 bg-white">
+                  <SelectTrigger className="w-[140px] sm:w-[200px] border-primary/20 bg-white text-xs sm:text-sm">
                     <SelectValue placeholder="Select Chama" />
                   </SelectTrigger>
                   <SelectContent>
@@ -160,7 +201,7 @@ export default function DashboardPage() {
               )}
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex gap-2 sm:gap-4">
               {activeChama && (
                 <>
                   <Button size="sm" variant="outline" className="border-primary text-primary font-bold hidden sm:flex" onClick={handleShareInvite}>
@@ -173,11 +214,11 @@ export default function DashboardPage() {
                         <Trash2 className="h-4 w-4 mr-2" /> Delete
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="w-[90vw] max-w-lg rounded-2xl">
                       <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the Chama <strong>{activeChama.name}</strong> and remove all associated data from our servers.
+                          This action cannot be undone. This will permanently delete <strong>{activeChama.name}</strong> and all its contribution history.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -191,24 +232,24 @@ export default function DashboardPage() {
                 </>
               )}
               <Link href="/chamas/new">
-                <Button size="sm" className="bg-primary text-white font-bold">
-                  <Plus className="h-4 w-4 mr-2" /> New
+                <Button size="sm" className="bg-primary text-white font-bold h-9 sm:h-10">
+                  <Plus className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">New Chama</span>
                 </Button>
               </Link>
             </div>
           </header>
 
-          <div className="p-8 space-y-8">
+          <div className="p-4 lg:p-8 space-y-6 lg:space-y-8">
             {activeChama ? (
               <>
                 <DashboardStats chama={activeChama} />
                 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                  <div className="lg:col-span-2 space-y-6 lg:space-y-8">
                     <MemberContributions chamaId={activeChama.id} />
                     <TransactionHistory chamaId={activeChama.id} />
                   </div>
-                  <div className="space-y-8">
+                  <div className="space-y-6 lg:space-y-8">
                     <AiPrediction chama={activeChama} />
                     <div className="bg-accent/5 border border-accent/20 rounded-2xl p-6 space-y-4">
                       <h3 className="font-headline font-bold text-accent text-lg">Treasurer Tool</h3>
@@ -217,11 +258,34 @@ export default function DashboardPage() {
                       </p>
                       <Button variant="secondary" className="w-full bg-accent text-white hover:bg-accent/90">View Unmatched</Button>
                     </div>
+                    {/* Mobile visible action buttons for Chama Management */}
+                    <div className="flex flex-col gap-3 sm:hidden">
+                       <Button variant="outline" className="w-full border-primary text-primary" onClick={handleShareInvite}>
+                         <Share2 className="h-4 w-4 mr-2" /> Copy Invite Link
+                       </Button>
+                       <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete Chama
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[90vw] max-w-lg rounded-2xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Chama?</AlertDialogTitle>
+                            <AlertDialogDescription>This is permanent.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteChama} className="bg-destructive text-white">Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4 bg-white rounded-2xl border-2 border-dashed">
+              <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6 space-y-4 bg-white rounded-2xl border-2 border-dashed">
                 <Coins className="h-12 w-12 text-muted-foreground opacity-20" />
                 <h2 className="text-2xl font-bold font-headline">No Active Chamas</h2>
                 <p className="text-muted-foreground max-w-sm">
