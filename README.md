@@ -37,9 +37,9 @@
 
 ## 🌍 About the Project
 
-**ChamaSmart** is a web application that automates the full lifecycle of a student chama — Kenya's culturally rooted informal savings group. It replaces manual M-Pesa reconciliation, missed-payment chaos, and treasurer burnout with an intelligent, real-time platform.
+**ChamaSmart** is a web application that automates the full lifecycle of a student chama . Kenya's culturally rooted informal savings group. It replaces manual M-Pesa reconciliation, missed-payment chaos, and treasurer burnout with an intelligent, real-time platform.
 
-The Treasurer logs into a dashboard, creates a chama with a goal and deadline, and shares a single link to the WhatsApp group. Members click the link, contribute via M-Pesa STK Push, and the system captures their identity directly from the transaction. An AI layer built on **Google Gemini** (via Firebase Genkit) then handles payment matching, goal forecasting, and smart payment reminders — all automatically.
+The Treasurer logs into a dashboard, creates a chama with a goal and deadline, and shares a single link to the WhatsApp group. Members click the link, contribute via M-Pesa STK Push, and the system captures their identity directly from the transaction. An AI layer built on **Google Gemini** (via Firebase Genkit) then handles payment matching, goal forecasting, and smart payment reminders  all automatically.
 
 No spreadsheets. No chasing people. No awkward messages.
 
@@ -47,11 +47,11 @@ No spreadsheets. No chasing people. No awkward messages.
 
 ## 🔴 The Problem
 
-In Kenyan student communities, chamas are everywhere — for trips, rent, projects, emergency funds, and shared goals. But the administration is a nightmare:
+In Kenyan student communities, chamas are everywhere  for trips, rent, projects, emergency funds, and shared goals. But the administration is a nightmare:
 
-- **The Treasurer's Burden:** For every 10 members sending money via M-Pesa, the treasurer manually checks 10 SMS notifications, matches names, and updates a spreadsheet — often getting it wrong.
+- **The Treasurer's Burden:** For every 10 members sending money via M-Pesa, the treasurer manually checks 10 SMS notifications, matches names, and updates a spreadsheet  often getting it wrong.
 - **The Ghost Member Problem:** People forget to pay. Deadlines slip. Group goals are missed. Friendships strain.
-- **No Visibility:** Members never know in real-time how close the group is to its goal — which kills motivation and accountability.
+- **No Visibility:** Members never know in real-time how close the group is to its goal which kills motivation and accountability.
 - **No Structure:** Without automated reminders, the treasurer becomes the sole accountability mechanism, which is exhausting and unsustainable.
 
 **The result:** The number one reason student chamas collapse is not lack of money. It is the administrative chaos of tracking it.
