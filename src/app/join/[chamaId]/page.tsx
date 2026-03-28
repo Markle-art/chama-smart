@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useFirestore, useUser, useDoc, useMemoFirebase, initiateAnonymousSignIn } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,8 @@ export default function JoinChamaPage() {
   const [isPaying, setIsPaying] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Memoize document reference
+  // Memoize document reference - we allow fetching even before user is signed in 
+  // because the security rules now allow public 'get' on Chamas.
   const chamaRef = useMemoFirebase(() => {
     if (!db || !chamaId) return null;
     return doc(db, 'chamas', chamaId as string);
@@ -33,6 +34,7 @@ export default function JoinChamaPage() {
   const { data: chama, isLoading: isChamaLoading } = useDoc(chamaRef);
 
   useEffect(() => {
+    // Initiate anonymous sign-in in the background to prepare for payment
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
@@ -63,7 +65,7 @@ export default function JoinChamaPage() {
     }
   };
 
-  if (isChamaLoading || isUserLoading) {
+  if (isChamaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

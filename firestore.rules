@@ -58,9 +58,10 @@ service cloud.firestore {
     }
 
     match /chamas/{chamaId} {
-      // Allow any signed-in user (including anonymous) to view Chama details for the Join page
-      allow get: if isSignedIn();
-      // Allow any signed-in user to list chamas (filtering should be done on client side)
+      // Allow PUBLIC read access to a specific Chama for the Join page (ID is a hard-to-guess token)
+      allow get: if true;
+      
+      // Listing chamas (for the treasurer dashboard) requires sign-in
       allow list: if isSignedIn();
       
       // Admin-only writes
@@ -91,8 +92,8 @@ service cloud.firestore {
 
     match /chamas/{chamaId}/members/{memberId}/contributions/{contributionId} {
       // Allow reading contributions for transparency on the Join/Status page
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get: if true;
+      allow list: if true;
       
       // Administrative control for record keeping
       allow create: if isSignedIn() && isValidAdminField() && isValidId(contributionId);
