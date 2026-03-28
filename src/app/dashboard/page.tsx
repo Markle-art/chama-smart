@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -18,10 +19,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Redirect if not logged in
-  if (!isUserLoading && (!user || user.isAnonymous)) {
-    router.push('/login');
-  }
+  // Redirect if not logged in - moved to useEffect to avoid render-phase navigation
+  useEffect(() => {
+    if (!isUserLoading && (!user || user.isAnonymous)) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   // Memoize query for chamas managed by the current user
   const chamasQuery = useMemoFirebase(() => {
@@ -43,7 +46,7 @@ export default function DashboardPage() {
     });
   };
 
-  if (isUserLoading || isChamasLoading) {
+  if (isUserLoading || isChamasLoading || (!user || user.isAnonymous)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
