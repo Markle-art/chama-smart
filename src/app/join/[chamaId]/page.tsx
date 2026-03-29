@@ -9,8 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Coins, Loader2, Smartphone, CheckCircle2, ArrowLeft, ShieldCheck } from 'lucide-react';
-import { initiateStkPush } from '@/lib/mpesa-service';
+import { Coins, Loader2, Smartphone, CheckCircle2, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -45,16 +44,29 @@ export default function JoinChamaPage() {
 
     setIsPaying(true);
     try {
-      const result = await initiateStkPush(phoneNumber, Number(amount), chama.name);
-      if (result.success) {
-        // Record the transaction attempt in Firestore
+      // Call our internal API which bridges to Safaricom Daraja
+      const response = await fetch('/api/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber,
+          amount: Number(amount),
+          chamaName: chama.name,
+          chamaId: chama.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.ResponseCode === "0") {
+        // Record the transaction attempt in Firestore for the Treasurer to see instantly
         const transactionId = `tx_${Math.random().toString(36).substring(7)}`;
         const transactionData = {
           id: transactionId,
-          mPesaTransId: result.checkoutRequestId,
+          mPesaTransId: result.CheckoutRequestID,
           transAmount: Number(amount),
           msisdn: phoneNumber,
-          firstName: "Guest",
+          firstName: "Contributor",
           billRefNumber: chama.name.substring(0, 15),
           transactionTime: new Date().toISOString(),
           businessShortCode: "174379",
@@ -62,7 +74,7 @@ export default function JoinChamaPage() {
           receivedAt: new Date().toISOString(),
           status: 'Pending Reconciliation',
           reconciledChamaId: chama.id,
-          adminUserId: chama.adminUserId, // For security rules
+          adminUserId: chama.adminUserId,
         };
 
         const txRef = doc(db, 'chamas', chama.id, 'transactions', transactionId);
@@ -70,15 +82,17 @@ export default function JoinChamaPage() {
 
         toast({
           title: "STK Push Sent",
-          description: "Please check your phone for the PIN prompt.",
+          description: "Check your phone for the PIN prompt.",
         });
         setIsSuccess(true);
+      } else {
+        throw new Error(result.errorMessage || "Failed to initiate push");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Payment Error",
-        description: "Could not initiate payment. Check your network.",
+        description: error.message || "Could not initiate payment. Please try again.",
       });
     } finally {
       setIsPaying(false);
@@ -100,15 +114,13 @@ export default function JoinChamaPage() {
           <ShieldCheck className="h-12 w-12 text-destructive" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold font-headline">Link Expired or Invalid</h1>
+          <h1 className="text-3xl font-bold font-headline">Link Expired</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            This savings group invitation is no longer active or the URL is incorrect. Please contact your group treasurer.
+            This savings group invitation is no longer active.
           </p>
         </div>
-        <Button asChild className="bg-primary text-white px-8 h-12 rounded-full shadow-lg">
-          <Link href="/">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Home
-          </Link>
+        <Button asChild className="bg-primary text-white px-8 h-12 rounded-full">
+          <Link href="/">Back to Home</Link>
         </Button>
       </div>
     );
@@ -118,31 +130,29 @@ export default function JoinChamaPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 flex flex-col items-center justify-center">
-      <Link href="/" className="flex items-center mb-8 hover:opacity-80 transition-opacity">
+      <Link href="/" className="flex items-center mb-8">
         <Coins className="h-8 w-8 text-primary mr-2" />
         <span className="font-headline font-bold text-2xl tracking-tight text-primary">ChamaSmart</span>
       </Link>
 
-      <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden rounded-3xl">
+      <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
         <div className="bg-primary h-3 w-full" />
         <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
-            <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1">
-              Active Savings Goal
-            </Badge>
-          </div>
+          <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 mx-auto mb-4">
+            Official Group Savings
+          </Badge>
           <CardTitle className="text-3xl font-bold font-headline text-foreground">{chama.name}</CardTitle>
           <CardDescription className="text-base mt-2">{chama.description}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8 pt-4 px-8">
+        <CardContent className="space-y-8 pt-4 px-8 pb-10">
           <div className="space-y-4">
             <div className="flex justify-between items-end">
               <div className="space-y-1">
-                <span className="text-sm font-medium text-muted-foreground">Raised So Far</span>
-                <div className="text-2xl font-bold text-primary">KES {chama.currentBalance.toLocaleString()}</div>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Collected</span>
+                <div className="text-3xl font-bold text-primary">KES {chama.currentBalance.toLocaleString()}</div>
               </div>
               <div className="text-right space-y-1">
-                <span className="text-sm font-medium text-muted-foreground">Target Goal</span>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Target</span>
                 <div className="text-xl font-bold">KES {chama.goalAmount.toLocaleString()}</div>
               </div>
             </div>
@@ -158,11 +168,11 @@ export default function JoinChamaPage() {
           {!isSuccess ? (
             <form onSubmit={handleContribute} className="space-y-5 pt-6 border-t border-dashed">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">M-Pesa Number</label>
+                <label className="text-sm font-bold text-foreground ml-1">M-Pesa Number</label>
                 <div className="relative">
                   <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    className="pl-12 h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary"
+                    className="pl-12 h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary text-base"
                     placeholder="2547XXXXXXXX"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
@@ -171,36 +181,33 @@ export default function JoinChamaPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-foreground">Contribution Amount (KES)</label>
+                <label className="text-sm font-bold text-foreground ml-1">Amount (KES)</label>
                 <Input
                   type="number"
-                  className="h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary text-lg font-bold"
-                  placeholder="e.g. 1000"
+                  className="h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary text-xl font-bold"
+                  placeholder="1000"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
                 />
               </div>
-              <Button type="submit" className="w-full bg-accent text-white hover:bg-accent/90 h-14 rounded-2xl text-xl font-bold shadow-xl shadow-accent/20 transition-all active:scale-95" disabled={isPaying}>
-                {isPaying ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : "Initiate Payment"}
+              <Button type="submit" className="w-full bg-accent text-white hover:bg-accent/90 h-16 rounded-2xl text-xl font-bold shadow-xl shadow-accent/20 transition-all active:scale-95" disabled={isPaying}>
+                {isPaying ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <><Zap className="h-5 w-5 mr-2" /> Pay with M-Pesa</>}
               </Button>
-              <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                <ShieldCheck className="h-3 w-3" /> Secure M-Pesa Express Payment
-              </div>
             </form>
           ) : (
-            <div className="py-10 text-center space-y-6 bg-green-50/50 rounded-3xl border border-green-100 animate-in fade-in zoom-in duration-300">
+            <div className="py-10 text-center space-y-6 bg-green-50/50 rounded-3xl border border-green-100 animate-in fade-in zoom-in">
               <div className="bg-white p-4 rounded-full w-fit mx-auto shadow-sm">
                 <CheckCircle2 className="h-12 w-12 text-green-600" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-green-800 font-headline">Push Notification Sent!</h3>
+                <h3 className="text-2xl font-bold text-green-800 font-headline">Check your phone!</h3>
                 <p className="text-sm text-green-700 max-w-[280px] mx-auto leading-relaxed">
-                  A payment prompt has been sent to <strong>{phoneNumber}</strong>. Please enter your PIN to confirm your contribution to {chama.name}.
+                  We've sent a payment prompt to <strong>{phoneNumber}</strong>. Once you enter your PIN, the dashboard will update instantly.
                 </p>
               </div>
               <Button variant="outline" onClick={() => setIsSuccess(false)} className="border-green-200 text-green-700 hover:bg-green-100 rounded-xl px-8">
-                Make Another Contribution
+                Contribute More
               </Button>
             </div>
           )}
@@ -208,7 +215,7 @@ export default function JoinChamaPage() {
       </Card>
 
       <footer className="mt-12 text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-        © 2026 ChamaSmart Infrastructure • Level 1 PCI-DSS Secure
+        © 2026 ChamaSmart Infrastructure
       </footer>
     </div>
   );

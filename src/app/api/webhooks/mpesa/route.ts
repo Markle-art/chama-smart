@@ -1,51 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { reconcileMpesaTransaction } from '@/ai/flows/reconcile-mpesa-transaction-flow';
-import { CHAMA_MEMBERS } from '@/lib/mock-data';
+import { generateSuccessNotification } from '@/ai/flows/payment-success-notification-flow';
+import { sendSms } from '@/lib/at-service';
 
 /**
- * M-Pesa C2B Webhook Handler
- * This would be the "ValidationURL" or "ConfirmationURL" registered with Safaricom Daraja.
+ * M-Pesa Callback Handler
+ * Receives the POST from Safaricom after the user enters their PIN.
  */
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json();
+    const body = await req.json();
+    const result = body.Body.stkCallback;
 
-    // Safaricom C2B Standard Payload structure (simplified for the flow)
-    // In production, we'd map fields from the raw JSON to our schema
-    const transaction = {
-      TransID: payload.TransID,
-      TransAmount: payload.TransAmount,
-      MSISDN: payload.MSISDN,
-      FirstName: payload.FirstName || "Unknown",
-      BillRefNumber: payload.BillRefNumber || "None",
-    };
+    if (result.ResultCode === 0) {
+      // 1. Extract payment details
+      const items = result.CallbackMetadata.Item;
+      const amount = items.find((i: any) => i.Name === 'Amount')?.Value;
+      const phone = items.find((i: any) => i.Name === 'PhoneNumber')?.Value;
+      const receipt = items.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value;
 
-    // 1. Call AI Flow to reconcile the transaction
-    const reconciliation = await reconcileMpesaTransaction({
-      transaction,
-      chamaMembers: CHAMA_MEMBERS.map(m => ({
-        id: m.id,
-        name: m.name,
-        phone: m.phone,
-        nicknames: m.nicknames,
-      })),
-    });
+      // Note: In a production environment, we would use firebase-admin here to update Firestore.
+      // For this prototype, we log the result and prepare the AI notification.
+      console.log(`[M-Pesa Success] ${phone} paid KES ${amount}. Receipt: ${receipt}`);
 
-    // 2. Based on reconciliation.matchedMemberId, update Firestore
-    // (Simulated logic below)
-    console.log(`[Webhook] Reconciled transaction ${transaction.TransID}:`, reconciliation);
+      // 2. Trigger AI Notification
+      const aiMessage = await generateSuccessNotification({
+        chamaName: "Your Chama",
+        memberName: phone.toString(),
+        amount: Number(amount),
+        progressPercentage: 75.5, // This would be calculated from the DB
+      });
 
-    // 3. Return response to Safaricom (Must be specific success code for C2B)
-    return NextResponse.json({
-      ResultCode: 0,
-      ResultDesc: "Success",
-    });
+      // 3. Send SMS via Africa's Talking
+      await sendSms(phone.toString(), aiMessage);
+    }
 
+    return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
   } catch (error) {
-    console.error("[Webhook Error]:", error);
-    return NextResponse.json({
-      ResultCode: 1,
-      ResultDesc: "Internal Error",
-    }, { status: 500 });
+    console.error('[M-Pesa Callback Error]:', error);
+    return NextResponse.json({ ResultCode: 1, ResultDesc: "Error" }, { status: 500 });
   }
 }
