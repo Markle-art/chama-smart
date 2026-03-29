@@ -179,10 +179,13 @@ CheckoutRequestID issued, payment prompt sent to member's phone*
 ### 💸 Payment Integration (Lipa Na M-Pesa)
 We use the **Safaricom Daraja API** to handle real-time member contributions. Below is a preview of a successful STK Push sequence triggered from the dashboard.
 
-###![M-Pesa STK Success](./docs/mpesa-stk-success%202.png)
+ ### 💸 Payment Integration (Lipa Na M-Pesa)
+ChamaSmart integrates directly with the **Safaricom Daraja API** to automate member contributions. When a treasurer initiates a collection or a member requests to save, an STK Push is triggered instantly to their registered phone number.
 
-*Figure 1: Successful STK Push notification and confirmation flow in the Sandbox environment.*
+#### Sandbox STK Push Preview:
+![M-Pesa STK Success](./docs/STK-Push.jpeg)
 
+*Figure 1: Live STK Push prompt for 'Chamasmart' showing the 1,000 KES contribution request in the Sandbox environment.*
 ### ➕ Create New Chama
 
 ---
