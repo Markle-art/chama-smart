@@ -173,7 +173,7 @@ The Treasurer stops chasing people. The system runs itself.
 *Live view showing Total Collected, Savings Goal, Completion %, Group Members, Recent Activity feed, and the AI-powered Treasurer Tool panel*
 
 ### 💳 M-Pesa STK Push — Live Integration Proof
-![M-Pesa STK Success](./docs/mpesa-stk-success2.png)
+![M-Pesa STK Success](./docs/mpesa-stk-success%202.png)](./docs/)
 *Daraja sandbox confirming a successful STK Push request — ResponseCode 0, 
 CheckoutRequestID issued, payment prompt sent to member's phone*
 
