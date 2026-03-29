@@ -169,7 +169,7 @@ The Treasurer stops chasing people. The system runs itself.
 ![Features](./docs/Features.png)
 
 ### 📊 Treasurer Dashboard
-![Dashboard](./docs/User_Interface.png)
+![Dashboard](./docs/UserInterface.png)
 *Live view showing Total Collected, Savings Goal, Completion %, Group Members, Recent Activity feed, and the AI-powered Treasurer Tool panel*
 
 ### 💳 M-Pesa STK Push — Live Integration Proof
