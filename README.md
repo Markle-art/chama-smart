@@ -176,6 +176,12 @@ The Treasurer stops chasing people. The system runs itself.
 ![M-Pesa STK Success](./docs/mpesa-stk-success%202.png)](./docs/)
 *Daraja sandbox confirming a successful STK Push request — ResponseCode 0, 
 CheckoutRequestID issued, payment prompt sent to member's phone*
+### 💸 Payment Integration (Lipa Na M-Pesa)
+We use the **Safaricom Daraja API** to handle real-time member contributions. Below is a preview of a successful STK Push sequence triggered from the dashboard.
+
+###![M-Pesa STK Success](./docs/mpesa-stk-success%202.png)
+
+*Figure 1: Successful STK Push notification and confirmation flow in the Sandbox environment.*
 
 ### ➕ Create New Chama
 
