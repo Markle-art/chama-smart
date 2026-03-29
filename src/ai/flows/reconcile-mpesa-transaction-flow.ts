@@ -1,22 +1,20 @@
 'use server';
 /**
  * @fileOverview This file defines a Genkit flow for reconciling M-Pesa transactions
- * to specific chama members using AI, even when transaction details are unclear.
- *
- * - reconcileMpesaTransaction - The main function to trigger the AI reconciliation process.
- * - ReconcileMpesaTransactionInput - The input type for the reconciliation.
- * - ReconcileMpesaTransactionOutput - The output type for the reconciliation result.
+ * to specific chama members using AI.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+export const maxDuration = 60;
 
 const MpesaTransactionSchema = z.object({
   TransID: z.string().describe('Unique M-Pesa transaction ID.'),
   TransAmount: z.string().describe('Amount of the transaction in KES.'),
   MSISDN: z.string().describe('Phone number of the sender.'),
   FirstName: z.string().describe('First name of the sender.'),
-  BillRefNumber: z.string().optional().describe('Bill reference number provided by the sender. Can be empty or unhelpful.'),
+  BillRefNumber: z.string().optional().describe('Bill reference number provided by the sender.'),
 });
 
 const ChamaMemberSchema = z.object({
@@ -27,17 +25,19 @@ const ChamaMemberSchema = z.object({
 });
 
 const ReconcileMpesaTransactionInputSchema = z.object({
-  transaction: MpesaTransactionSchema.describe('The M-Pesa transaction data to reconcile.'),
-  chamaMembers: z.array(ChamaMemberSchema).describe('A list of active chama members for matching.'),
+  transaction: MpesaTransactionSchema,
+  chamaMembers: z.array(ChamaMemberSchema),
 });
+
 export type ReconcileMpesaTransactionInput = z.infer<typeof ReconcileMpesaTransactionInputSchema>;
 
 const ReconcileMpesaTransactionOutputSchema = z.object({
   matchedMemberId: z.string().nullable().describe('The ID of the chama member identified, or null if no confident match.'),
   confidenceScore: z.number().describe('A score (0-1) indicating the AI\'s confidence in the match.'),
   needsReview: z.boolean().describe('True if the match confidence is low and requires manual verification.'),
-  reason: z.string().describe('Explanation for the match or why it requires review.'),
+  reason: z.string().describe('Explanation for the match outcome.'),
 });
+
 export type ReconcileMpesaTransactionOutput = z.infer<typeof ReconcileMpesaTransactionOutputSchema>;
 
 export async function reconcileMpesaTransaction(input: ReconcileMpesaTransactionInput): Promise<ReconcileMpesaTransactionOutput> {
@@ -66,12 +66,6 @@ Match Criteria:
 1. Phone Number: Strongest indicator.
 2. Name/Nicknames: Flexible matching (e.g., 'Brian' vs 'Bryan').
 3. Reference: Use if it contains member identifiers.
-
-Example Output (Confidence Match):
-{"matchedMemberId": "member123", "confidenceScore": 0.95, "needsReview": false, "reason": "Exact phone number match."}
-
-Example Output (Low Confidence):
-{"matchedMemberId": null, "confidenceScore": 0.4, "needsReview": true, "reason": "Multiple potential matches for name 'John'."}
 
 Analyze the details carefully and return the appropriate JSON matching the defined schema.`,
 });

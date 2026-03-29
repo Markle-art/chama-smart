@@ -17,6 +17,8 @@ export function AiPrediction({ chama }: AiPredictionProps) {
 
   useEffect(() => {
     const fetchPrediction = async () => {
+      if (!chama?.id) return;
+      
       setLoading(true);
       try {
         const result = await predictSavingsGoal({
@@ -29,16 +31,15 @@ export function AiPrediction({ chama }: AiPredictionProps) {
         });
         setPrediction(result);
       } catch (error) {
-        console.error("Prediction failed:", error);
+        console.error("AI Prediction failed:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (chama) {
-      fetchPrediction();
-    }
-  }, [chama]);
+    fetchPrediction();
+    // Using stable values (id and balance) to prevent redundant AI calls on metadata-only updates
+  }, [chama?.id, chama?.currentBalance]);
 
   if (loading) {
     return (
