@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Initiates M-Pesa STK Push via Daraja API (Phase 1)
+ * Initiates M-Pesa STK Push via Daraja API
+ * Updates the AccountReference to display the Chama Name on the contributor's phone.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
       throw new Error('M-Pesa credentials missing in environment variables');
     }
 
+    // 1. Get Access Token
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
     const tokenRes = await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
       headers: { Authorization: `Basic ${auth}` },
@@ -23,6 +25,7 @@ export async function POST(req: NextRequest) {
     
     const { access_token } = await tokenRes.json();
 
+    // 2. Prepare STK Push Credentials
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
     const passkey = process.env.MPESA_PASSKEY;
     const shortcode = process.env.MPESA_SHORTCODE || '174379';
@@ -31,9 +34,15 @@ export async function POST(req: NextRequest) {
 
     const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
 
-    // Use chamaId as reference so the webhook can find the group easily
-    const safeRef = chamaId.substring(0, 12);
+    /**
+     * AccountReference is what appears on the contributor's phone prompt.
+     * It must be alphanumeric, no spaces, and max 12 characters.
+     */
+    const sanitizedRef = chamaName
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .substring(0, 12) || 'ChamaSmart';
 
+    // 3. Initiate Push
     const stkRes = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
       method: 'POST',
       headers: {
@@ -50,12 +59,14 @@ export async function POST(req: NextRequest) {
         PartyB: shortcode,
         PhoneNumber: phoneNumber,
         CallBackURL: process.env.MPESA_CALLBACK_URL,
-        AccountReference: safeRef,
-        TransactionDesc: `Contrib to ${chamaName}`,
+        AccountReference: sanitizedRef,
+        TransactionDesc: `Contribution to ${chamaName}`,
       }),
     });
 
     const result = await stkRes.json();
+    console.log(`[STK Initiation]: Sent prompt for ${chamaName} to ${phoneNumber}`);
+    
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[STK API Error]:', error);
