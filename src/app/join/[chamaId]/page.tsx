@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useFirestore, useUser, useDoc, useMemoFirebase, initiateAnonymousSignIn, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,17 +13,30 @@ import { Coins, Loader2, Smartphone, CheckCircle2, ArrowLeft, ShieldCheck, Zap }
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
+// ── Which screen are we on? ───────────────────────────────────────────────────
+type Stage =
+  | 'form'           // member enters phone + amount
+  | 'stk_sent'       // STK push sent, waiting for PIN
+  | 'ratiba_prompt'  // ask: automate future payments?
+  | 'ratiba_done'    // standing order confirmed
+  | 'nudge_opted'    // they chose AI reminders instead
+
 export default function JoinChamaPage() {
   const { chamaId } = useParams();
-  const router = useRouter();
   const { user, isUserLoading, auth } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  
+
+  const [stage, setStage] = useState<Stage>('form');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [isPaying, setIsPaying] = useState(false);
+  const [isSettingRatiba, setIsSettingRatiba] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // We store these after STK push succeeds so Ratiba can use them
+  const [lastCheckoutId, setLastCheckoutId] = useState('');
+  const [savedMemberId, setSavedMemberId] = useState('');
 
   const chamaRef = useMemoFirebase(() => {
     if (!db || !chamaId) return null;
@@ -32,12 +45,21 @@ export default function JoinChamaPage() {
 
   const { data: chama, isLoading: isChamaLoading } = useDoc(chamaRef);
 
+  // Sign in anonymously so Firestore rules allow the member to write
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
+  // ── Next month's date — used as Ratiba start date ─────────────────────────
+  function getNextMonthDate(): string {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d.toISOString().split('T')[0]; // YYYY-MM-DD
+  }
+
+  // ── STEP 1: Trigger STK Push ──────────────────────────────────────────────
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chama || !db) return;
@@ -94,11 +116,13 @@ export default function JoinChamaPage() {
         title: "Payment Error",
         description: error.message || "Could not initiate payment. Please try again.",
       });
+      console.error('[JoinPage] Contribute error:', error);
     } finally {
       setIsPaying(false);
     }
   };
 
+  // ── LOADING ───────────────────────────────────────────────────────────────
   if (isChamaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -107,6 +131,7 @@ export default function JoinChamaPage() {
     );
   }
 
+  // ── INVALID LINK ──────────────────────────────────────────────────────────
   if (!chama) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center space-y-6">
@@ -137,6 +162,7 @@ export default function JoinChamaPage() {
 
       <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
         <div className="bg-primary h-3 w-full" />
+
         <CardHeader className="text-center pb-2">
           <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 mx-auto mb-4">
             Official Group Savings
@@ -144,6 +170,7 @@ export default function JoinChamaPage() {
           <CardTitle className="text-3xl font-bold font-headline text-foreground">{chama.name}</CardTitle>
           <CardDescription className="text-base mt-2">{chama.description}</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-8 pt-4 px-8 pb-10">
           <div className="space-y-4">
             <div className="flex justify-between items-end">
@@ -156,12 +183,10 @@ export default function JoinChamaPage() {
                 <div className="text-xl font-bold">KES {chama.goalAmount.toLocaleString()}</div>
               </div>
             </div>
-            <div className="space-y-2">
-              <Progress value={progress} className="h-4 bg-primary/10 rounded-full" />
-              <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                <span>{progress.toFixed(1)}% Reached</span>
-                <span>Deadline: {new Date(chama.goalDate).toLocaleDateString()}</span>
-              </div>
+            <Progress value={progress} className="h-4 bg-primary/10 rounded-full" />
+            <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span>{progress.toFixed(1)}% Reached</span>
+              <span>Deadline: {new Date(chama.goalDate).toLocaleDateString()}</span>
             </div>
           </div>
 
@@ -188,6 +213,7 @@ export default function JoinChamaPage() {
                   placeholder="1000"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  min="1"
                   required
                 />
               </div>
