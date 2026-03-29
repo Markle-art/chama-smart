@@ -188,7 +188,10 @@ ChamaSmart integrates directly with the **Safaricom Daraja API** to automate mem
 *Figure 1: Live STK Push prompt for 'Chamasmart' showing the 1,000 KES contribution request in the Sandbox environment.*
 ### ➕ Create New Chama
 
----
+### 🤖 AI-Powered Analytics — Group Goal Forecasting
+![AI Insights](./docs/Ai%20Insights.png)
+*Figure 2: The **AI Savings Predictor** powered by Google Gemini. It analyzes M-Pesa contribution velocity to provide a 100% confidence forecast on goal attainment.*
+
 
 ## 🛠️ Tech Stack
 
