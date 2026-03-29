@@ -3,23 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useFirestore, useUser, useDoc, useMemoFirebase, initiateAnonymousSignIn, setDocumentNonBlocking } from '@/firebase';
-import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Coins, Loader2, Smartphone, CheckCircle2, ArrowLeft, ShieldCheck, Zap } from 'lucide-react';
+import { Coins, Loader2, Smartphone, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-
-// ── Which screen are we on? ───────────────────────────────────────────────────
-type Stage =
-  | 'form'           // member enters phone + amount
-  | 'stk_sent'       // STK push sent, waiting for PIN
-  | 'ratiba_prompt'  // ask: automate future payments?
-  | 'ratiba_done'    // standing order confirmed
-  | 'nudge_opted'    // they chose AI reminders instead
 
 export default function JoinChamaPage() {
   const { chamaId } = useParams();
@@ -27,16 +19,10 @@ export default function JoinChamaPage() {
   const db = useFirestore();
   const { toast } = useToast();
 
-  const [stage, setStage] = useState<Stage>('form');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [isPaying, setIsPaying] = useState(false);
-  const [isSettingRatiba, setIsSettingRatiba] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // We store these after STK push succeeds so Ratiba can use them
-  const [lastCheckoutId, setLastCheckoutId] = useState('');
-  const [savedMemberId, setSavedMemberId] = useState('');
 
   const chamaRef = useMemoFirebase(() => {
     if (!db || !chamaId) return null;
@@ -45,28 +31,21 @@ export default function JoinChamaPage() {
 
   const { data: chama, isLoading: isChamaLoading } = useDoc(chamaRef);
 
-  // Sign in anonymously so Firestore rules allow the member to write
+  // Phase 0: Sign in anonymously so Firestore rules allow the member to log their payment attempt
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
-  // ── Next month's date — used as Ratiba start date ─────────────────────────
-  function getNextMonthDate(): string {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    return d.toISOString().split('T')[0]; // YYYY-MM-DD
-  }
-
-  // ── STEP 1: Trigger STK Push ──────────────────────────────────────────────
+  // Phase 1: Trigger STK Push & Phase 3 (Initial): Log Pending Transaction
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chama || !db) return;
 
     setIsPaying(true);
     try {
-      // Call our internal API which bridges to Safaricom Daraja
+      // 1. Call our internal API which bridges to Safaricom Daraja
       const response = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -81,48 +60,47 @@ export default function JoinChamaPage() {
       const result = await response.json();
 
       if (result.ResponseCode === "0") {
-        // Record the transaction attempt in Firestore for the Treasurer to see instantly
+        // 2. Record the transaction attempt in Firestore for the Treasurer to see instantly (Phase 3 Initial)
+        // This is caught by the Treasurer's onSnapshot listener (Phase 4)
         const transactionId = `tx_${Math.random().toString(36).substring(7)}`;
         const transactionData = {
           id: transactionId,
-          mPesaTransId: result.CheckoutRequestID,
+          mPesaTransId: result.CheckoutRequestID, // We use CheckoutRequestID as the key for reconciliation
           transAmount: Number(amount),
           msisdn: phoneNumber,
           firstName: "Contributor",
-          billRefNumber: chama.name.substring(0, 15),
+          billRefNumber: chama.name,
           transactionTime: new Date().toISOString(),
           businessShortCode: "174379",
           rawPayload: JSON.stringify(result),
           receivedAt: new Date().toISOString(),
           status: 'Pending Reconciliation',
           reconciledChamaId: chama.id,
-          adminUserId: chama.adminUserId,
+          adminUserId: chama.adminUserId, // Denormalized for security rules and aggregation
         };
 
         const txRef = doc(db, 'chamas', chama.id, 'transactions', transactionId);
         setDocumentNonBlocking(txRef, transactionData, { merge: true });
 
         toast({
-          title: "STK Push Sent",
-          description: "Check your phone for the PIN prompt.",
+          title: "Payment Initiated",
+          description: "Check your phone for the M-Pesa PIN prompt.",
         });
         setIsSuccess(true);
       } else {
-        throw new Error(result.errorMessage || "Failed to initiate push");
+        throw new Error(result.errorMessage || "Failed to initiate M-Pesa push");
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Payment Error",
-        description: error.message || "Could not initiate payment. Please try again.",
+        description: error.message || "Could not connect to M-Pesa. Please try again.",
       });
-      console.error('[JoinPage] Contribute error:', error);
     } finally {
       setIsPaying(false);
     }
   };
 
-  // ── LOADING ───────────────────────────────────────────────────────────────
   if (isChamaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -131,7 +109,6 @@ export default function JoinChamaPage() {
     );
   }
 
-  // ── INVALID LINK ──────────────────────────────────────────────────────────
   if (!chama) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 text-center space-y-6">
@@ -141,10 +118,10 @@ export default function JoinChamaPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold font-headline">Link Expired</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            This savings group invitation is no longer active.
+            This savings group invitation is no longer active or the link is incorrect.
           </p>
         </div>
-        <Button asChild className="bg-primary text-white px-8 h-12 rounded-full">
+        <Button asChild className="bg-primary text-white px-8 h-12 rounded-full font-bold">
           <Link href="/">Back to Home</Link>
         </Button>
       </div>
@@ -160,11 +137,11 @@ export default function JoinChamaPage() {
         <span className="font-headline font-bold text-2xl tracking-tight text-primary">ChamaSmart</span>
       </Link>
 
-      <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden rounded-[2.5rem]">
+      <Card className="w-full max-w-lg border-none shadow-2xl overflow-hidden rounded-[2.5rem] bg-card">
         <div className="bg-primary h-3 w-full" />
 
         <CardHeader className="text-center pb-2">
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 mx-auto mb-4">
+          <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1 mx-auto mb-4 font-bold">
             Official Group Savings
           </Badge>
           <CardTitle className="text-3xl font-bold font-headline text-foreground">{chama.name}</CardTitle>
@@ -197,7 +174,7 @@ export default function JoinChamaPage() {
                 <div className="relative">
                   <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    className="pl-12 h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary text-base"
+                    className="pl-12 h-14 bg-muted/30 border-none rounded-2xl focus-visible:ring-primary text-base font-medium"
                     placeholder="2547XXXXXXXX"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
@@ -222,17 +199,17 @@ export default function JoinChamaPage() {
               </Button>
             </form>
           ) : (
-            <div className="py-10 text-center space-y-6 bg-green-50/50 rounded-3xl border border-green-100 animate-in fade-in zoom-in">
+            <div className="py-10 text-center space-y-6 bg-primary/5 rounded-3xl border border-primary/10 animate-in fade-in zoom-in">
               <div className="bg-white p-4 rounded-full w-fit mx-auto shadow-sm">
-                <CheckCircle2 className="h-12 w-12 text-green-600" />
+                <CheckCircle2 className="h-12 w-12 text-primary" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-green-800 font-headline">Check your phone!</h3>
-                <p className="text-sm text-green-700 max-w-[280px] mx-auto leading-relaxed">
-                  We've sent a payment prompt to <strong>{phoneNumber}</strong>. Once you enter your PIN, the dashboard will update instantly.
+                <h3 className="text-2xl font-bold text-primary font-headline">Check your phone!</h3>
+                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
+                  We've sent a payment prompt to <strong>{phoneNumber}</strong>. Once you enter your PIN, the group dashboard will update instantly.
                 </p>
               </div>
-              <Button variant="outline" onClick={() => setIsSuccess(false)} className="border-green-200 text-green-700 hover:bg-green-100 rounded-xl px-8">
+              <Button variant="outline" onClick={() => setIsSuccess(false)} className="border-primary/20 text-primary hover:bg-primary/5 rounded-xl px-8 font-bold">
                 Contribute More
               </Button>
             </div>
@@ -241,7 +218,7 @@ export default function JoinChamaPage() {
       </Card>
 
       <footer className="mt-12 text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-        © 2026 ChamaSmart Infrastructure
+        © 2026 ChamaSmart Intelligent Infrastructure
       </footer>
     </div>
   );
