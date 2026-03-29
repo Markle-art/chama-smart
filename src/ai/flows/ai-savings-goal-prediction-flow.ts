@@ -6,8 +6,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const maxDuration = 60;
-
 const PredictSavingsGoalInputSchema = z.object({
   chamaId: z.string().describe('The ID of the chama.'),
   currentTotalContributions: z.number().describe('The total amount contributed to date.'),

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BrainCircuit, Loader2, TrendingUp, TrendingDown } from 'lucide-react';
-import { predictSavingsGoal, PredictSavingsGoalOutput } from '@/ai/flows/ai-savings-goal-prediction-flow';
+import { predictSavingsGoal } from '@/ai/flows/ai-savings-goal-prediction-flow';
+import type { PredictSavingsGoalOutput } from '@/ai/flows/ai-savings-goal-prediction-flow';
 import { CONTRIBUTION_HISTORY } from '@/lib/mock-data';
 import { Progress } from '@/components/ui/progress';
 
@@ -38,7 +39,6 @@ export function AiPrediction({ chama }: AiPredictionProps) {
     };
 
     fetchPrediction();
-    // Using stable values (id and balance) to prevent redundant AI calls on metadata-only updates
   }, [chama?.id, chama?.currentBalance]);
 
   if (loading) {

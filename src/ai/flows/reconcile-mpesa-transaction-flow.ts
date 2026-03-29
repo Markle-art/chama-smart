@@ -7,8 +7,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const maxDuration = 60;
-
 const MpesaTransactionSchema = z.object({
   TransID: z.string().describe('Unique M-Pesa transaction ID.'),
   TransAmount: z.string().describe('Amount of the transaction in KES.'),

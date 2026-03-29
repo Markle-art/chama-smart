@@ -31,21 +31,18 @@ export default function JoinChamaPage() {
 
   const { data: chama, isLoading: isChamaLoading } = useDoc(chamaRef);
 
-  // Phase 0: Sign in anonymously so Firestore rules allow the member to log their payment attempt
   useEffect(() => {
     if (!isUserLoading && !user && auth) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
-  // Phase 1: Trigger STK Push & Phase 3 (Initial): Log Pending Transaction
   const handleContribute = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chama || !db) return;
+    if (!chama || !db || isPaying) return; // Reinforced debounce: prevent click if already paying
 
     setIsPaying(true);
     try {
-      // 1. Call our internal API which bridges to Safaricom Daraja
       const response = await fetch('/api/stk-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,13 +56,11 @@ export default function JoinChamaPage() {
 
       const result = await response.json();
 
-      if (result.ResponseCode === "0") {
-        // 2. Record the transaction attempt in Firestore for the Treasurer to see instantly (Phase 3 Initial)
-        // This is caught by the Treasurer's onSnapshot listener (Phase 4)
+      if (response.ok && result.ResponseCode === "0") {
         const transactionId = `tx_${Math.random().toString(36).substring(7)}`;
         const transactionData = {
           id: transactionId,
-          mPesaTransId: result.CheckoutRequestID, // We use CheckoutRequestID as the key for reconciliation
+          mPesaTransId: result.CheckoutRequestID,
           transAmount: Number(amount),
           msisdn: phoneNumber,
           firstName: "Contributor",
@@ -76,7 +71,7 @@ export default function JoinChamaPage() {
           receivedAt: new Date().toISOString(),
           status: 'Pending Reconciliation',
           reconciledChamaId: chama.id,
-          adminUserId: chama.adminUserId, // Denormalized for security rules and aggregation
+          adminUserId: chama.adminUserId,
         };
 
         const txRef = doc(db, 'chamas', chama.id, 'transactions', transactionId);
@@ -88,7 +83,7 @@ export default function JoinChamaPage() {
         });
         setIsSuccess(true);
       } else {
-        throw new Error(result.errorMessage || "Failed to initiate M-Pesa push");
+        throw new Error(result.error || result.errorMessage || "Failed to initiate M-Pesa push");
       }
     } catch (error: any) {
       toast({
@@ -97,7 +92,8 @@ export default function JoinChamaPage() {
         description: error.message || "Could not connect to M-Pesa. Please try again.",
       });
     } finally {
-      setIsPaying(false);
+      // Small delay before unlocking to prevent rapid double-clicks
+      setTimeout(() => setIsPaying(false), 1000);
     }
   };
 

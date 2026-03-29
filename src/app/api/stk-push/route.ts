@@ -1,48 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Simple in-memory rate limiter for the STK push endpoint
+const rateLimitMap = new Map<string, { count: number; lastRequest: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 3;
+
 /**
- * Initiates M-Pesa STK Push via Daraja API
- * Updates the AccountReference to display the Chama Name on the contributor's phone.
+ * Initiates M-Pesa STK Push via Daraja API with rate limiting and sanitization.
  */
 export async function POST(req: NextRequest) {
   try {
     const { phoneNumber, amount, chamaName, chamaId } = await req.json();
 
+    // 1. Basic Rate Limiting Check
+    const now = Date.now();
+    const userLimit = rateLimitMap.get(phoneNumber) || { count: 0, lastRequest: 0 };
+
+    if (now - userLimit.lastRequest < RATE_LIMIT_WINDOW) {
+      if (userLimit.count >= MAX_REQUESTS_PER_WINDOW) {
+        return NextResponse.json(
+          { error: 'Too many payment attempts. Please wait a minute.' },
+          { status: 429 }
+        );
+      }
+      userLimit.count += 1;
+    } else {
+      userLimit.count = 1;
+      userLimit.lastRequest = now;
+    }
+    rateLimitMap.set(phoneNumber, userLimit);
+
+    // 2. Input Validation & Sanitization
+    if (!phoneNumber || !/^\d{12}$/.test(phoneNumber)) {
+      return NextResponse.json({ error: 'Invalid phone number format. Use 2547XXXXXXXX' }, { status: 400 });
+    }
+
+    if (!amount || amount <= 0 || amount > 70000) {
+      return NextResponse.json({ error: 'Invalid amount. Range: 1 - 70,000 KES' }, { status: 400 });
+    }
+
     const consumerKey = process.env.MPESA_CONSUMER_KEY;
     const consumerSecret = process.env.MPESA_CONSUMER_SECRET;
+    const passkey = process.env.MPESA_PASSKEY;
 
-    if (!consumerKey || !consumerSecret) {
+    if (!consumerKey || !consumerSecret || !passkey) {
       throw new Error('M-Pesa credentials missing in environment variables');
     }
 
-    // 1. Get Access Token
+    // 3. Get Access Token
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
     const tokenRes = await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
       headers: { Authorization: `Basic ${auth}` },
     });
     
     if (!tokenRes.ok) throw new Error('Failed to fetch M-Pesa access token');
-    
     const { access_token } = await tokenRes.json();
 
-    // 2. Prepare STK Push Credentials
+    // 4. Prepare STK Push Credentials
     const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
-    const passkey = process.env.MPESA_PASSKEY;
     const shortcode = process.env.MPESA_SHORTCODE || '174379';
-    
-    if (!passkey) throw new Error('M-Pesa Passkey missing');
-
     const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64');
 
-    /**
-     * AccountReference is what appears on the contributor's phone prompt.
-     * It must be alphanumeric, no spaces, and max 12 characters.
-     */
     const sanitizedRef = chamaName
       .replace(/[^a-zA-Z0-9]/g, '')
       .substring(0, 12) || 'ChamaSmart';
 
-    // 3. Initiate Push
+    // 5. Initiate Push
     const stkRes = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
       method: 'POST',
       headers: {
@@ -65,8 +88,6 @@ export async function POST(req: NextRequest) {
     });
 
     const result = await stkRes.json();
-    console.log(`[STK Initiation]: Sent prompt for ${chamaName} to ${phoneNumber}`);
-    
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[STK API Error]:', error);
