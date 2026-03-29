@@ -9,6 +9,8 @@ import { sendSms } from '@/lib/at-service';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log('[M-Pesa Callback Received]:', JSON.stringify(body, null, 2));
+
     const result = body.Body.stkCallback;
 
     if (result.ResultCode === 0) {
@@ -18,25 +20,29 @@ export async function POST(req: NextRequest) {
       const phone = items.find((i: any) => i.Name === 'PhoneNumber')?.Value;
       const receipt = items.find((i: any) => i.Name === 'MpesaReceiptNumber')?.Value;
 
-      // Note: In a production environment, we would use firebase-admin here to update Firestore.
-      // For this prototype, we log the result and prepare the AI notification.
-      console.log(`[M-Pesa Success] ${phone} paid KES ${amount}. Receipt: ${receipt}`);
+      console.log(`[M-Pesa Success Confirmation] ${phone} paid KES ${amount}. Receipt: ${receipt}`);
 
-      // 2. Trigger AI Notification
-      const aiMessage = await generateSuccessNotification({
-        chamaName: "Your Chama",
-        memberName: phone.toString(),
-        amount: Number(amount),
-        progressPercentage: 75.5, // This would be calculated from the DB
-      });
+      // 2. Trigger AI Notification logic (Generates a friendly success message)
+      try {
+        const aiMessage = await generateSuccessNotification({
+          chamaName: "ChamaSmart Group",
+          memberName: phone.toString(),
+          amount: Number(amount),
+          progressPercentage: 85.0, // In production, calculate this from Firestore
+        });
 
-      // 3. Send SMS via Africa's Talking
-      await sendSms(phone.toString(), aiMessage);
+        // 3. Send SMS via Africa's Talking
+        await sendSms(phone.toString(), aiMessage);
+      } catch (aiError) {
+        console.error('[AI/SMS Notification Error]:', aiError);
+      }
+    } else {
+      console.warn(`[M-Pesa Payment Failed/Cancelled] Code: ${result.ResultCode}, Desc: ${result.ResultDesc}`);
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
   } catch (error) {
-    console.error('[M-Pesa Callback Error]:', error);
+    console.error('[M-Pesa Callback Critical Error]:', error);
     return NextResponse.json({ ResultCode: 1, ResultDesc: "Error" }, { status: 500 });
   }
 }
