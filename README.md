@@ -288,5 +288,4 @@ Built for hackathon purposes. All rights reserved by the ChamaSmart team © 2025
 **Made in Kenya 🇰🇪 — For the culture, powered by M-Pesa**
 
 [🚀 Try ChamaSmart Live](https://chama-smart-nine.vercel.app/) · [📂 View Source](https://github.com/zakoshy/chama-smart)
-
 </div>
