@@ -115,8 +115,8 @@ The Treasurer stops chasing people. The system runs itself.
 
 ### 🤖 AI Features — Powered by Google Gemini via Firebase Genkit
 - **Smart Payment Matching:** Gemini matches M-Pesa transactions to member records using phone number, name, or nickname from the transaction reference
-- **Unmatched Transaction Flagging:** Payments that cannot be auto-matched are surfaced to the Treasurer for manual review — nothing is ever lost
-- **Goal Prediction:** AI forecasts whether the group will meet its savings target based on current contribution velocity — displayed as Completion % with "On Track" status
+- **Unmatched Transaction Flagging:** Payments that cannot be auto-matched are surfaced to the Treasurer for manual review so nothing is ever lost
+- **Goal Prediction:** AI forecasts whether the group will meet its savings target based on current contribution velocity which is displayed as Completion % with "On Track" status
 - **AI Nudge Reminders:** Personalized reminders auto-generated and sent before due dates with a direct payment link embedded
 
 ### 💳 M-Pesa Integration (Daraja API)
