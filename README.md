@@ -176,8 +176,6 @@ The Treasurer stops chasing people. The system runs itself.
 ![M-Pesa STK Success](./docs/mpesa-stk-success%202.png)](./docs/)
 *Daraja sandbox confirming a successful STK Push request — ResponseCode 0, 
 CheckoutRequestID issued, payment prompt sent to member's phone*
-### 💸 Payment Integration (Lipa Na M-Pesa)
-We use the **Safaricom Daraja API** to handle real-time member contributions. Below is a preview of a successful STK Push sequence triggered from the dashboard.
 
  ### 💸 Payment Integration (Lipa Na M-Pesa)
 ChamaSmart integrates directly with the **Safaricom Daraja API** to automate member contributions. When a treasurer initiates a collection or a member requests to save, an STK Push is triggered instantly to their registered phone number.
@@ -190,7 +188,7 @@ ChamaSmart integrates directly with the **Safaricom Daraja API** to automate mem
 
 ### 🤖 AI-Powered Analytics — Group Goal Forecasting
 ![AI Insights](./docs/Ai%20Insights.png)
-*Figure 2: The **AI Savings Predictor** powered by Google Gemini. It analyzes M-Pesa contribution velocity to provide a 100% confidence forecast on goal attainment.*
+*Figure : The **AI Savings Predictor** powered by Google Gemini. It analyzes M-Pesa contribution velocity to provide a 100% confidence forecast on goal attainment.*
 
 
 ## 🛠️ Tech Stack
