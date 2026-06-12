@@ -274,7 +274,7 @@ Built with 🫱🏾‍🫲🏽 by a team of six for the **M-Pesa × GoMyCode Mon
 | **Edwin Oshome** | Fullstack Engineer | System architecture, Firebase Authentication, Firestore data modelling |
 | **Akinyi Grace Fiona** | Backend Engineer | Genkit AI flows — payment matching, goal prediction, nudge generation |
 | **Breattah Okeyo** | Data Scientist | Group Health Score algorithm, contribution analytics, Recharts visualizations |
-| **Mark Lekayia** | Cybersecurity Engineer | Firestore security rules, API endpoint hardening, webhook validation |
+| **Lekayia Mark** | Cybersecurity Engineer | Firestore security rules, API endpoint hardening, webhook validation |
 
 ---
 
